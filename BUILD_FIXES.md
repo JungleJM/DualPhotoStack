@@ -49,3 +49,14 @@ This document tracks all changes made to fix automated build issues.
 - `https://github.com/JungleJM/DualPhotoStack/releases/download/[TAG]/DPS-Linux-arm64.AppImage`
 - `https://github.com/JungleJM/DualPhotoStack/releases/download/[TAG]/DPS-Linux-x64.deb`
 - `https://github.com/JungleJM/DualPhotoStack/releases/download/[TAG]/DPS-Linux-arm64.deb`
+
+## Build Attempt #3 - FAILED
+**Date:** 2025-06-25
+**Commit:** d9f44ce (Add automatic GitHub Releases for public downloads)
+**Error:** GitHub Actions token lacks permission to create releases
+**Details:** "Resource not accessible by integration" - need `contents: write` permission
+
+## Fix #2 - Add GitHub Actions Permissions
+**Action:** Added `permissions: contents: write` to workflow
+**Rationale:** GitHub Actions needs explicit permission to create releases
+**Status:** ✅ APPLIED - permissions added to workflow
