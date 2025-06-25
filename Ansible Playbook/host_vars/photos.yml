@@ -1,0 +1,24 @@
+---
+# Variables specific to your Immich server
+
+# Custom timing if different from defaults
+immich_processing_start: "11:00"
+immich_processing_end: "13:00"
+photoprism_processing_start: "13:05"
+photoprism_processing_end: "10:55"
+
+# Server-specific paths
+library_path: "/mnt/photovault/library"
+apps_path: "/mnt/photovault/apps"
+
+# Performance tuning
+immich_high_concurrency: 4
+immich_low_concurrency: 1
+photoprism_workers: 4
+
+# Monitoring
+enable_detailed_logging: true
+
+# EPS Specific Variables
+immich_compose_path: "/opt/stacks/immich"
+photoprism_compose_path: "/opt/stacks/photoprism"

@@ -1,0 +1,17 @@
+---
+# Global variables for all servers
+
+# Timezone
+timezone: "America/Chicago"
+
+# Default processing configuration
+default_immich_workers: 4
+default_photoprism_workers: 4
+
+# Monitoring
+enable_status_checks: true
+status_check_interval: "6h"
+
+# Logging
+log_processing_changes: true
+log_directory: "/var/log/eps"

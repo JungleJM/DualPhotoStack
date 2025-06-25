@@ -1,0 +1,17 @@
+---
+# Variables specific to media servers
+
+# Docker configuration
+docker_compose_version: "2.21.0"
+
+# Default paths (can be overridden per host)
+default_immich_compose_path: "/opt/stacks/immich"
+default_photoprism_compose_path: "/opt/stacks/photoprism"
+
+# Processing windows (can be overridden per host)
+default_immich_window: "2h"
+default_photoprism_window: "22h"
+
+# Backup configuration
+backup_enabled: true
+backup_retention_days: 30

@@ -1,0 +1,318 @@
+---
+# Operation EPS - PhotoPrism/Immich Timing Coordination Playbook
+# Manages processing windows between PhotoPrism (22-23 hours) and Immich (1-2 hours)
+
+- name: "Operation EPS - Manage PhotoPrism/Immich Processing Coordination"
+  hosts: photos #my LXC name
+  become: yes
+  vars:
+    # Template Variables Required:
+    # - action (string): Coordination action to perform
+    #   Valid options: status, start_immich, stop_immich, start_photoprism, stop_photoprism, schedule, cleanup
+    # - immich_api_key (string): API key for Immich authentication (from Semaphore template variable)
+    
+    # Docker Compose Paths
+    immich_compose_path: "/opt/stacks/immich"
+    photoprism_compose_path: "/opt/stacks/photoprism"
+    
+    # Timing Configuration  
+    immich_processing_start: "11:00"
+    immich_processing_end: "13:00"
+    photoprism_processing_start: "13:05"
+    photoprism_processing_end: "10:55"
+
+    # Network and API Configuration
+    immich_base_url: "http://192.168.50.130:2283"
+
+    # Valid action list for validation
+    valid_actions:
+      - status
+      - start_immich
+      - stop_immich
+      - start_photoprism
+      - stop_photoprism
+      - schedule
+      - cleanup
+
+
+  tasks:
+    # =============================================================================
+    # INPUT VALIDATION
+    # =============================================================================
+
+    - name: "Validate required variables"
+      block:
+        - name: "Display coordination action"
+          ansible.builtin.debug:
+            msg: "🎯 Operation EPS Coordination - Action: {{ action }}"
+          
+        - name: "Validate action value"
+          ansible.builtin.fail:
+            msg: |
+              ERROR: Invalid action '{{ action }}' provided.
+              
+              Valid actions are: {{ valid_actions | join(', ') }}
+              
+              You provided: '{{ action }}'
+          when: action not in valid_actions
+          
+        - name: "Check if API key is configured"
+          ansible.builtin.fail:
+            msg: |
+              ERROR: 'immich_api_key' variable is required but not configured.
+              
+              This variable should be set in your Semaphore template variables.
+              The API key is needed to control Immich processing via REST API.
+          when: immich_api_key is not defined or immich_api_key == ""
+          
+
+
+    # =============================================================================
+    # IMMICH PROCESSING CONTROL (USING JOB ENDPOINTS)
+    # =============================================================================
+    
+    - name: "Start Immich Processing Window"
+      block:
+        - name: "Get current Immich system config"
+          ansible.builtin.uri:
+            url: "{{ immich_base_url }}/api/system-config"
+            method: GET
+            headers:
+              X-API-Key: "{{ immich_api_key }}"
+          register: immich_current_config
+          
+        - name: "Update Immich to high processing mode"
+          ansible.builtin.uri:
+            url: "{{ immich_base_url }}/api/system-config"
+            method: PUT
+            body_format: json
+            body: "{{ immich_current_config.json | combine({'job': {'backgroundTask': {'concurrency': 4}, 'thumbnailGeneration': {'concurrency': 4}, 'metadataExtraction': {'concurrency': 4}, 'videoConversion': {'concurrency': 2}, 'smartSearch': {'concurrency': 2}}}, recursive=True) }}"
+            headers:
+              Content-Type: "application/json"
+              X-API-Key: "{{ immich_api_key }}"
+          register: immich_start_result
+          
+        - name: "Log Immich processing start"
+          ansible.builtin.debug:
+            msg: "✅ Immich processing window started at {{ ansible_date_time.time }} - High concurrency enabled"
+            
+      when: action == "start_immich"
+      
+    - name: "Stop Immich Processing Window"
+      block:
+        - name: "Get current Immich system config"
+          ansible.builtin.uri:
+            url: "{{ immich_base_url }}/api/system-config"
+            method: GET
+            headers:
+              X-API-Key: "{{ immich_api_key }}"
+          register: immich_current_config
+          
+        - name: "Update Immich to low processing mode"
+          ansible.builtin.uri:
+            url: "{{ immich_base_url }}/api/system-config"
+            method: PUT
+            body_format: json
+            body: "{{ immich_current_config.json | combine({'job': {'backgroundTask': {'concurrency': 1}, 'thumbnailGeneration': {'concurrency': 1}, 'metadataExtraction': {'concurrency': 1}, 'videoConversion': {'concurrency': 1}, 'smartSearch': {'concurrency': 1}}}, recursive=True) }}"
+            headers:
+              Content-Type: "application/json"
+              X-API-Key: "{{ immich_api_key }}"
+          register: immich_low_result
+          
+        - name: "Log Immich processing stop"
+          ansible.builtin.debug:
+            msg: "🔄 Immich processing window ended at {{ ansible_date_time.time }} - Low concurrency enabled"
+            
+      when: action == "stop_immich"
+
+    # =============================================================================
+    # PHOTOPRISM PROCESSING CONTROL
+    # =============================================================================
+    
+    - name: "Start PhotoPrism Processing Window"
+      block:
+        - name: "Enable PhotoPrism indexing"
+          ansible.builtin.shell: |
+            cd {{ photoprism_compose_path }}
+            docker compose exec -T photoprism photoprism index --cleanup
+          register: photoprism_index_result
+          async: 3600  # Allow up to 1 hour for indexing
+          poll: 0      # Don't wait for completion
+          
+        - name: "Start PhotoPrism background tasks"
+          ansible.builtin.shell: |
+            cd {{ photoprism_compose_path }}
+            docker compose exec -T photoprism photoprism optimize
+          register: photoprism_optimize_result
+          async: 1800  # Allow 30 minutes for optimization
+          poll: 0
+          
+        - name: "Log PhotoPrism processing start"
+          ansible.builtin.debug:
+            msg: "🎯 PhotoPrism processing window started at {{ ansible_date_time.time }}"
+            
+      when: action == "start_photoprism"
+      
+    - name: "Stop PhotoPrism Processing Window"
+      block:
+        - name: "Send graceful shutdown signal to PhotoPrism processes"
+          ansible.builtin.shell: |
+            cd {{ photoprism_compose_path }}
+            docker compose exec -T photoprism pkill -TERM photoprism || true
+          register: photoprism_stop_result
+          
+        - name: "Wait for PhotoPrism processes to complete current tasks"
+          ansible.builtin.pause:
+            seconds: 30
+            
+        - name: "Log PhotoPrism processing stop"
+          ansible.builtin.debug:
+            msg: "⏸️ PhotoPrism processing window ended at {{ ansible_date_time.time }}"
+            
+      when: action == "stop_photoprism"
+
+    # =============================================================================
+    # MONITORING AND STATUS (SIMPLIFIED - NO PING)
+    # =============================================================================
+    
+    - name: "Check Processing Status"
+      block:
+        - name: "Get Immich system config (tests API auth and connectivity)"
+          ansible.builtin.uri:
+            url: "{{ immich_base_url }}/api/system-config"
+            method: GET
+            headers:
+              X-API-Key: "{{ immich_api_key }}"
+            timeout: 10
+          register: immich_config
+          ignore_errors: yes
+          
+        - name: "Get Immich container status"
+          ansible.builtin.shell: |
+            cd {{ immich_compose_path }}
+            docker compose ps immich-server --format "table {{'{{'}}{{'.Name'}}{{'}}'}}\t{{'{{'}}{{'.Status'}}{{'}}'}}"
+          register: immich_container_status
+          ignore_errors: yes
+          
+        - name: "Get PhotoPrism container status"
+          ansible.builtin.shell: |
+            cd {{ photoprism_compose_path }}
+            docker compose ps photoprism --format "table {{'{{'}}{{'.Name'}}{{'}}'}}\t{{'{{'}}{{'.Status'}}{{'}}'}}"
+          register: photoprism_status
+          ignore_errors: yes
+          
+        - name: "Display current processing status"
+          ansible.builtin.debug:
+            msg: |
+              📊 Current Processing Status:
+              
+              🎯 Immich API: {{ 'Online & Authenticated' if immich_config.status is defined and immich_config.status == 200 else 'Offline or Auth Failed' }}
+              🎯 Immich Container: {{ 'Running' if immich_container_status.stdout is defined and 'Up' in immich_container_status.stdout else 'Unknown' }}
+              📸 PhotoPrism Container: {{ 'Running' if photoprism_status.stdout is defined and 'Up' in photoprism_status.stdout else 'Unknown' }}
+              
+              🔑 API Key Status: {{ 'Configured' if immich_api_key != 'YOUR_ACTUAL_API_KEY_HERE' else 'NEEDS REPLACEMENT' }}
+              🌐 Target URL: {{ immich_base_url }}
+              ⏰ Time: {{ ansible_date_time.time }}
+              
+      when: action == "status"
+
+    # =============================================================================
+    # SCHEDULE INFORMATION (USE SEMAPHORE SCHEDULES INSTEAD)
+    # =============================================================================
+    
+    - name: "Display Schedule Instructions"
+      block:
+        - name: "Show Semaphore schedule setup instructions"
+          ansible.builtin.debug:
+            msg: |
+              📅 EPS Processing Schedule Setup Instructions:
+              
+              Create these 4 schedules in Semaphore Web Interface:
+              
+              🟢 Schedule 1: "EPS Start Immich"
+              ├── Template: EPS Coordination
+              ├── Cron: 0 11 * * * (Daily at 11:00 AM)
+              └── Variables: action = start_immich
+              
+              🔴 Schedule 2: "EPS Stop Immich"
+              ├── Template: EPS Coordination  
+              ├── Cron: 0 13 * * * (Daily at 1:00 PM)
+              └── Variables: action = stop_immich
+              
+              🟢 Schedule 3: "EPS Start PhotoPrism"
+              ├── Template: EPS Coordination
+              ├── Cron: 5 13 * * * (Daily at 1:05 PM)
+              └── Variables: action = start_photoprism
+              
+              🔴 Schedule 4: "EPS Stop PhotoPrism"
+              ├── Template: EPS Coordination
+              ├── Cron: 55 10 * * * (Daily at 10:55 AM)
+              └── Variables: action = stop_photoprism
+              
+              ⚡ Processing Windows:
+              📱 Immich: {{ immich_processing_start }} - {{ immich_processing_end }} (2 hours)
+              🎯 PhotoPrism: {{ photoprism_processing_start }} - {{ photoprism_processing_end }} (22h 50m)
+              
+              ✅ All scheduling stays within Semaphore - no external cron jobs!
+              
+      when: action == "schedule"
+
+    # =============================================================================
+    # CLEANUP AND MAINTENANCE
+    # =============================================================================
+    
+    - name: "Remove Processing Coordination"
+      block:
+        - name: "Display cleanup instructions"
+          ansible.builtin.debug:
+            msg: |
+              🧹 EPS Coordination Cleanup Instructions:
+              
+              To fully remove EPS coordination:
+              1. Delete the 4 Semaphore schedules from the web interface:
+                 • EPS Start Immich
+                 • EPS Stop Immich  
+                 • EPS Start PhotoPrism
+                 • EPS Stop PhotoPrism
+              
+              2. Optionally delete this EPS Coordination template
+              
+              ✅ No external cron jobs or scripts to clean up!
+              
+      when: action == "cleanup"
+
+# =============================================================================
+# OPERATION EPS COORDINATION SUMMARY
+# =============================================================================
+# 
+# Processing Windows:
+# ├── Immich: 11:00 AM - 1:00 PM (2 hours)
+# │   ├── High concurrency mobile backup processing (4 workers)
+# │   ├── Peak mobile usage time coverage
+# │   ├── Quick thumbnail generation
+# │   └── Video conversion (2 workers)
+# └── PhotoPrism: 1:10 PM - 10:50 AM (22h 50m)
+#     ├── Intensive AI processing
+#     ├── Facial recognition and object detection  
+#     ├── Metadata generation and indexing
+#     ├── Advanced search index building
+#     └── Photo optimization
+#
+# Network Configuration:
+# ├── Semaphore: 192.168.50.102 (orchestrator)
+# ├── Photos LXC: 192.168.50.130 (Immich + PhotoPrism)
+# └── API Calls: Cross-container via IP addresses
+#
+# Usage Examples:
+# ├── Check status: action="status"
+# ├── Test Immich start: action="start_immich"
+# ├── Test Immich stop: action="stop_immich"
+# ├── Deploy schedule: action="schedule"
+# └── Remove coordination: action="cleanup"
+#
+# Prerequisites:
+# ├── Immich API key configured in vars
+# ├── Network connectivity between containers
+# ├── Docker compose services running
+# └── Semaphore template configured
+# =============================================================================
