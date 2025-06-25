@@ -32,3 +32,20 @@ This document tracks all changes made to fix automated build issues.
 4. ✅ Changed from npm ci to npm install for better compatibility
 
 **AUTOMATED BUILD SYSTEM NOW WORKING SUCCESSFULLY** 🚀
+
+## Enhancement #1 - Public Release Distribution
+**Date:** 2025-06-25
+**Action:** Added automatic GitHub Releases creation
+**Features:**
+- ✅ Public download URLs (no login required)
+- ✅ Clean file naming (DPS-Linux-x64.AppImage, DPS-Linux-arm64.AppImage)
+- ✅ Automatic tagging (v1.0.0-build-123)
+- ✅ Complete download instructions in release notes
+- ✅ Both AppImage and DEB packages available
+- ✅ Triggers only on main branch builds
+
+**Public Download URLs will be:**
+- `https://github.com/JungleJM/DualPhotoStack/releases/download/[TAG]/DPS-Linux-x64.AppImage`
+- `https://github.com/JungleJM/DualPhotoStack/releases/download/[TAG]/DPS-Linux-arm64.AppImage`
+- `https://github.com/JungleJM/DualPhotoStack/releases/download/[TAG]/DPS-Linux-x64.deb`
+- `https://github.com/JungleJM/DualPhotoStack/releases/download/[TAG]/DPS-Linux-arm64.deb`
