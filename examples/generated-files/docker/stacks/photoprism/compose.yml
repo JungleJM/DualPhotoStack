@@ -11,7 +11,7 @@ services:
       --collation-server=utf8mb4_unicode_ci --max-connections=512
       --innodb-rollback-on-timeout=OFF --innodb-lock-wait-timeout=120
     volumes:
-      - /opt/stacks/photoprism/mariadb-data:/var/lib/mysql
+      - {{STACK_PATH}}/photoprism/mariadb-data:/var/lib/mysql
     environment:
       MARIADB_AUTO_UPGRADE: "1"
       MARIADB_INITDB_SKIP_TZINFO: "1"
@@ -80,7 +80,7 @@ services:
       - /mnt/photovault/apps/photoprism/cache:/photoprism/cache
       - /mnt/photovault/apps/photoprism/albums:/photoprism/storage/albums
       # Performance Data (NVME)
-      - /opt/stacks/photoprism/temp:/photoprism/temp
+      - {{STACK_PATH}}/photoprism/temp:/photoprism/temp
       # System
       - /etc/localtime:/etc/localtime:ro
 networks:

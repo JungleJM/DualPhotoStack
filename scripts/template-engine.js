@@ -13,7 +13,7 @@ class DPSTemplateEngine {
   constructor() {
     this.config = {};
     this.templateDir = path.join(__dirname, '..', 'docker-templates');
-    this.outputDir = '/opt/stacks';
+    this.outputDir = path.join(process.env.HOME, '.local', 'share', 'docker-stacks');
   }
 
   /**
@@ -25,7 +25,7 @@ class DPSTemplateEngine {
       paths: {
         LIBRARY_PATH: userConfig.libraryPath,
         DATA_STORAGE_PATH: userConfig.dataStoragePath,
-        STACK_PATH: '/opt/stacks'
+        STACK_PATH: path.join(process.env.HOME, '.local', 'share', 'docker-stacks')
       },
       network: await this.detectNetworkInterfaces(),
       user: this.getUserInfo(),
@@ -206,7 +206,7 @@ class DPSTemplateEngine {
       const value = this.getNestedValue(config, varName);
       if (value === undefined || value === null) {
         console.warn(`Warning: Variable ${varName} not found in config`);
-        return match; // Keep original if not found
+        return ''; // Replace with empty string for null/undefined values
       }
       return value;
     });

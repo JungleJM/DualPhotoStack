@@ -17,10 +17,10 @@ services:
       # Dockge application data
       - {{DATA_STORAGE_PATH}}/dockge/data:/app/data
       # Stacks directory (CRITICAL: Must match exactly)
-      - /opt/stacks:/opt/stacks
+      - {{STACK_PATH}}:{{STACK_PATH}}
     environment:
       # Tell Dockge where stacks are located
-      - DOCKGE_STACKS_DIR=/opt/stacks
+      - DOCKGE_STACKS_DIR={{STACK_PATH}}
     healthcheck:
       test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:5001"]
       interval: 30s

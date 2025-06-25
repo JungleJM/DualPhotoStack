@@ -244,10 +244,16 @@ ipcMain.handle('app:minimize', () => {
 });
 
 // Development helpers
-if (process.argv.includes('--dev')) {
-  // Auto-reload in development
-  require('electron-reload')(path.join(__dirname, '..'), {
-    electron: path.join(__dirname, '..', 'node_modules', '.bin', 'electron'),
-    hardResetMethod: 'exit'
-  });
+if (process.argv.includes('--dev') && !app.isPackaged) {
+  try {
+    // Only load electron-reload if available (development environment)
+    require('electron-reload')(path.join(__dirname, '..'), {
+      electron: path.join(__dirname, '..', 'node_modules', '.bin', 'electron'),
+      hardResetMethod: 'exit'
+    });
+    console.log('Development mode: Hot reload enabled');
+  } catch (error) {
+    // Gracefully handle missing electron-reload in production builds
+    console.warn('Could not load electron-reload:', error.message);
+  }
 }

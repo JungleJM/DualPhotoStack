@@ -38,7 +38,7 @@
         },
         "STACK_PATH": {
           "type": "string",
-          "default": "/opt/stacks",
+          "default": "~/.local/share/docker-stacks",
           "description": "Dockge stack location (fixed)"
         }
       },

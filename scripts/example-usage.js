@@ -38,7 +38,7 @@ async function exampleDeployment() {
     console.log();
 
     // Deploy services
-    console.log('📦 Deploying services to /opt/stacks...');
+    console.log('📦 Deploying services to ~/.local/share/docker-stacks...');
     const deploymentResults = await engine.deployAll();
     
     Object.entries(deploymentResults).forEach(([service, success]) => {
@@ -68,7 +68,7 @@ async function exampleDeployment() {
     
     console.log('\\n🎉 DPS deployment example completed!');
     console.log('\\nNext steps:');
-    console.log('1. Start services with: cd /opt/stacks/<service> && docker compose up -d');
+    console.log('1. Start services with: cd ~/.local/share/docker-stacks/<service> && docker compose up -d');
     console.log('2. Access Dockge at one of the URLs above to manage containers');
     console.log('3. Configure Immich mobile app with the Immich server URL');
 
