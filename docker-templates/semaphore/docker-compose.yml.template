@@ -1,0 +1,65 @@
+# Semaphore Docker Compose Template
+# Ansible automation platform for DPS coordination
+# Variables will be substituted by the DPS deployment system
+
+name: semaphore
+services:
+  semaphore-db:
+    image: postgres:15
+    container_name: semaphore-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: semaphore
+      POSTGRES_USER: semaphore
+      POSTGRES_PASSWORD: ${SEMAPHORE_DB_PASSWORD}
+    volumes:
+      - {{DATA_STORAGE_PATH}}/semaphore/database:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U semaphore -d semaphore"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  semaphore:
+    image: semaphoreui/semaphore:latest
+    container_name: semaphore-app
+    restart: unless-stopped
+    depends_on:
+      - semaphore-db
+    ports:
+      # Multi-interface binding for secure access
+{{SEMAPHORE_PORT_BINDINGS}}
+    environment:
+      # Database Configuration
+      SEMAPHORE_DB_DIALECT: postgres
+      SEMAPHORE_DB_HOST: semaphore-db
+      SEMAPHORE_DB_PORT: 5432
+      SEMAPHORE_DB_USER: semaphore
+      SEMAPHORE_DB_PASS: ${SEMAPHORE_DB_PASSWORD}
+      SEMAPHORE_DB_NAME: semaphore
+      # Admin Configuration
+      SEMAPHORE_ADMIN_PASSWORD: ${SEMAPHORE_ADMIN_PASSWORD}
+      SEMAPHORE_ADMIN_NAME: admin
+      SEMAPHORE_ADMIN_EMAIL: ${SEMAPHORE_ADMIN_EMAIL}
+      # Access Configuration
+      SEMAPHORE_ACCESS_KEY_ENCRYPTION: ${SEMAPHORE_ACCESS_KEY_ENCRYPTION}
+      # Timezone
+      TZ: {{TIMEZONE}}
+    volumes:
+      # Semaphore configuration and playbooks
+      - {{DATA_STORAGE_PATH}}/semaphore/config:/etc/semaphore
+      - {{DATA_STORAGE_PATH}}/semaphore/playbooks:/var/lib/semaphore
+      # SSH keys for remote access (if needed)
+      - {{DATA_STORAGE_PATH}}/semaphore/ssh:/root/.ssh:ro
+      # System time sync
+      - /etc/localtime:/etc/localtime:ro
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000/api/ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+networks:
+  default:
+    name: dps-network
+    external: false
