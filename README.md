@@ -1,57 +1,83 @@
-# Operation EPS Ansible Automation
+# Dual Photo Stack (DPS)
 
-Ansible playbooks for managing Operation EPS (Effortless Photo Stack) - a coordinated PhotoPrism/Immich photo management system.
+A comprehensive photo management solution that coordinates **Immich** and **PhotoPrism** to share the same photo library while intelligently managing processing windows to avoid resource conflicts.
 
-## Architecture Overview
-- **Immich Processing Window**: 11:00 AM - 1:00 PM (2 hours, high concurrency)
-- **PhotoPrism Processing Window**: 1:05 PM - 10:55 AM (22+ hours, AI processing)
-- **API-based Coordination**: Immich controlled via REST API with authentication
-- **Container-based Control**: PhotoPrism managed via Docker exec commands
-- **Timezone**: America/Chicago (configurable)
+## 🎯 Project Vision
 
-## Features
-- ✅ Automated processing window coordination
-- ✅ API-authenticated Immich control (concurrency management)
-- ✅ Docker-based PhotoPrism control (indexing/optimization)
-- ✅ Real-time status monitoring
-- ✅ Semaphore UI integration with template variables
-- ✅ Clean separation of concerns (no external cron jobs)
+DPS provides an **Electron-based interface** for easy deployment and configuration of a coordinated photo management system that gives you the best of both worlds:
 
-## Quick Start
-1. Set up Semaphore UI templates with this playbook
-2. Configure API key in template variables
-3. Create automated schedules for coordination
+- **Immich**: Modern interface, excellent mobile app, fast backup processing
+- **PhotoPrism**: Advanced AI features, facial recognition, powerful search capabilities
+- **Shared Library**: Both services access the same photo collection
+- **Intelligent Coordination**: Automated processing windows prevent resource conflicts
 
-## Semaphore Templates Required
-- **EPS Check Status** - Manual status checking
-- **EPS Start Immich** - High concurrency processing
-- **EPS Stop Immich** - Low concurrency processing  
-- **EPS Start PhotoPrism** - Indexing and optimization
-- **EPS Stop PhotoPrism** - Graceful process shutdown
-- **EPS Cleanup** - Manual cleanup instructions
+## 🏗️ Architecture Overview
 
-## Processing Actions
-- `status` - Check current system status
-- `start_immich` - Enable high Immich processing (4 workers)
-- `stop_immich` - Set low Immich processing (1 worker)
-- `start_photoprism` - Start PhotoPrism indexing/optimization
-- `stop_photoprism` - Gracefully stop PhotoPrism processes
-- `schedule` - Display Semaphore schedule setup instructions
-- `cleanup` - Display manual cleanup instructions
+### Processing Windows
+- **Immich Processing**: 11:00 AM - 1:00 PM (2 hours, mobile backup priority)
+- **PhotoPrism Processing**: 1:05 PM - 10:55 AM (22+ hours, AI analysis)
 
-## Daily Automation Schedule
-- **10:55 AM** - Stop PhotoPrism processing
-- **11:00 AM** - Start Immich processing (mobile backup priority)
-- **1:00 PM** - Stop Immich processing
-- **1:05 PM** - Start PhotoPrism processing (AI analysis)
+### Network Access
+- **Multi-interface binding**: localhost + LAN + Tailscale support
+- **Secure configuration**: No wildcard (0.0.0.0) exposure
+- **Automatic detection**: Network interfaces and service URLs
 
-## Network Architecture
-- **Semaphore**: 192.168.50.102 (orchestration)
-- **Photos LXC**: 192.168.50.130 (Immich + PhotoPrism)
-- **API Calls**: Cross-container communication via IP addresses
+### Container Management
+- **Dockge Integration**: Easy container management interface
+- **Stack Deployment**: Services deployed to `/opt/stacks/`
+- **Health Monitoring**: Built-in service health checks
 
-## Prerequisites
-- Immich API key (configured in Semaphore template variables)
-- Docker Compose stacks running on target host
-- SSH connectivity from Semaphore to photos container
-- Semaphore UI with scheduling capability
+## 🚀 Deployment Modes
+
+### 1. DPS Only
+- Install Immich + PhotoPrism + Dockge
+- Manual processing window management
+
+### 2. Add to Existing Semaphore
+- Connect to your existing Semaphore instance
+- Upload coordination playbooks
+- Automated processing scheduling
+
+### 3. Full Installation
+- Complete setup including local Semaphore
+- Fully automated coordination
+- One-click deployment
+
+## 📁 Project Structure
+
+```
+DualPhotoStack/
+├── electron-app/          # Electron GUI application (Phase 2)
+├── docker-templates/      # Parameterized Docker Compose templates
+├── scripts/              # Template engine and deployment utilities
+├── ansible/              # Semaphore playbooks for coordination
+├── docs/                 # Implementation plan and documentation
+└── examples/             # Example configurations
+```
+
+## 🔧 Current Status
+
+### ✅ Phase 1 Complete: Core Infrastructure
+- Docker Compose template system with variable substitution
+- Multi-interface network binding (localhost + LAN + Tailscale)
+- Environment file templates with auto-generated secrets
+- Configuration schema and validation
+- Template processing engine
+
+### 🚧 In Development: Phase 2 - Electron Application
+
+## 📖 Documentation
+
+- **[Implementation Plan](Docs/IMPLEMENTATION_PLAN.md)** - Complete development roadmap
+- **[Scripts README](scripts/README.md)** - Template engine documentation
+
+## 🔒 Security Features
+
+- Auto-generated secure passwords (24+ characters)
+- No hardcoded credentials in templates
+- Controlled interface binding (no wildcard exposure)
+- Encrypted API key storage
+
+## 🎛️ Legacy: Original EPS System
+
+This repository evolved from the original **Operation EPS (Effortless Photo Stack)** - an Ansible-based coordination system. The legacy configuration is preserved in the `Ansible Playbook/` directory and provides the foundation for the automated coordination features.
