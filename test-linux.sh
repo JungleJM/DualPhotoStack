@@ -33,6 +33,25 @@ echo
 # Check prerequisites
 echo "🔍 Checking Prerequisites..."
 
+# Check if OS is immutable (Silverblue, Kinoite, etc.)
+IMMUTABLE_OS=false
+DISTROBOX_SETUP=false
+
+# Detect immutable OS variants
+if command -v ostree &> /dev/null || [[ -f /run/ostree-booted ]]; then
+    IMMUTABLE_OS=true
+    echo "  🔒 Immutable OS detected (OSTree-based)"
+elif [[ -f /etc/os-release ]]; then
+    # Check for specific immutable distributions
+    if grep -qi "silverblue\|kinoite\|sericea\|onyx" /etc/os-release; then
+        IMMUTABLE_OS=true
+        echo "  🔒 Immutable OS detected (Fedora variant)"
+    elif grep -qi "opensuse.*microos\|opensuse.*kalpa" /etc/os-release; then
+        IMMUTABLE_OS=true
+        echo "  🔒 Immutable OS detected (openSUSE variant)"
+    fi
+fi
+
 # Check Node.js
 if command -v node &> /dev/null; then
     NODE_VERSION=$(node --version)
@@ -42,36 +61,134 @@ if command -v node &> /dev/null; then
     NODE_MAJOR=$(echo $NODE_VERSION | cut -d'.' -f1 | sed 's/v//')
     if [[ $NODE_MAJOR -lt 18 ]]; then
         echo "  ⚠️  Node.js version is too old (need 18+)"
-        echo "     Installing newer version..."
         
-        # Install Node.js 18+
-        if command -v apt &> /dev/null; then
-            curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
-            sudo apt-get install -y nodejs
-        elif command -v dnf &> /dev/null; then
-            curl -fsSL https://rpm.nodesource.com/setup_18.x | sudo bash -
-            sudo dnf install -y nodejs npm
+        if [[ "$IMMUTABLE_OS" == "true" ]]; then
+            echo "     Setting up distrobox container for newer Node.js..."
+            # Handle immutable OS Node.js installation via distrobox
+            if ! command -v distrobox &> /dev/null; then
+                echo "  ❌ Distrobox not found. Please install distrobox for immutable OS support"
+                echo "     Try: flatpak install flathub io.github.89luca89.distrobox"
+                exit 1
+            fi
+            
+            # Create distrobox container with Node.js
+            echo "     Creating isolated container with Node.js, Electron, Git, and Docker..."
+            if distrobox create --name dps-dev --image fedora:39 --yes &>/dev/null; then
+                echo "     Installing development tools in container..."
+                distrobox enter dps-dev -- bash -c "
+                    sudo dnf update -y && 
+                    sudo dnf install -y nodejs npm git docker docker-compose &&
+                    sudo systemctl enable docker &&
+                    node --version && npm --version
+                " &>/dev/null
+                
+                if [[ $? -eq 0 ]]; then
+                    echo "  ✅ Development container 'dps-dev' created successfully"
+                    echo "     To use: distrobox enter dps-dev"
+                    echo "     Container includes: Node.js 18+, npm, Git, Docker"
+                    DISTROBOX_SETUP=true
+                else
+                    echo "  ❌ Failed to set up development container"
+                    exit 1
+                fi
+            else
+                echo "  ❌ Failed to create distrobox container"
+                exit 1
+            fi
         else
-            echo "  ❌ Please install Node.js 18+ manually"
-            exit 1
+            echo "     Installing newer version..."
+            # Regular mutable OS installation
+            if command -v apt &> /dev/null; then
+                curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
+                sudo apt-get install -y nodejs
+            elif command -v dnf &> /dev/null; then
+                curl -fsSL https://rpm.nodesource.com/setup_18.x | sudo bash -
+                sudo dnf install -y nodejs npm
+            else
+                echo "  ❌ Please install Node.js 18+ manually"
+                exit 1
+            fi
         fi
     fi
 else
     echo "  ❌ Node.js not found, installing..."
     
-    # Auto-install Node.js based on distro
-    if command -v apt &> /dev/null; then
-        sudo apt update
-        curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
-        sudo apt-get install -y nodejs
-    elif command -v dnf &> /dev/null; then
-        curl -fsSL https://rpm.nodesource.com/setup_18.x | sudo bash -
-        sudo dnf install -y nodejs npm
-    elif command -v pacman &> /dev/null; then
-        sudo pacman -S nodejs npm
+    if [[ "$IMMUTABLE_OS" == "true" ]]; then
+        echo "     Immutable OS detected - setting up distrobox container..."
+        echo "     This creates an isolated container with Node.js, Electron, Git, and Docker"
+        
+        # Check if distrobox is available
+        if ! command -v distrobox &> /dev/null; then
+            echo "  ❌ Distrobox required for immutable OS support"
+            echo "     Please install distrobox first:"
+            echo "     - Flatpak: flatpak install flathub io.github.89luca89.distrobox"
+            echo "     - Package manager: check your distribution's packages"
+            exit 1
+        fi
+        
+        # Create development container
+        echo "     Creating development container..."
+        if distrobox create --name dps-dev --image fedora:39 --yes; then
+            echo "     Installing Node.js and development tools..."
+            if distrobox enter dps-dev -- bash -c "
+                sudo dnf update -y && 
+                sudo dnf install -y nodejs npm git docker docker-compose &&
+                sudo systemctl enable docker &&
+                echo 'Node.js:' && node --version &&
+                echo 'npm:' && npm --version &&
+                echo 'Git:' && git --version &&
+                echo 'Docker:' && docker --version
+            "; then
+                echo "  ✅ Development container 'dps-dev' ready"
+                echo "     Container installed in: \$HOME/.local/share/containers/storage/volumes"
+                echo "  📝 To use the container:"
+                echo "     - Enter: distrobox enter dps-dev"
+                echo "     - Run DPS: cd /path/to/DualPhotoStack && npm run dev"
+                echo "     - Delete when done: distrobox rm dps-dev"
+                DISTROBOX_SETUP=true
+            else
+                echo "  ❌ Failed to set up development tools in container"
+                exit 1
+            fi
+        else
+            echo "  ❌ Failed to create distrobox container"
+            exit 1
+        fi
     else
-        echo "  ❌ Unsupported package manager. Please install Node.js 18+ manually"
-        exit 1
+        # Auto-install Node.js based on distro (mutable OS)
+        if command -v apt &> /dev/null; then
+            sudo apt update
+            curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
+            sudo apt-get install -y nodejs
+        elif command -v dnf &> /dev/null; then
+            curl -fsSL https://rpm.nodesource.com/setup_18.x | sudo bash -
+            sudo dnf install -y nodejs npm
+        elif command -v pacman &> /dev/null; then
+            sudo pacman -S nodejs npm
+        else
+            echo "  ❌ Unsupported package manager. Please install Node.js 18+ manually"
+            exit 1
+        fi
+    fi
+fi
+
+# If we set up distrobox, inform user how to continue
+if [[ "$DISTROBOX_SETUP" == "true" ]]; then
+    echo
+    echo "🔔 IMMUTABLE OS SETUP COMPLETE!"
+    echo "   Development environment is ready in distrobox container 'dps-dev'"
+    echo "   To continue testing:"
+    echo "   1. distrobox enter dps-dev"
+    echo "   2. cd /path/to/DualPhotoStack"
+    echo "   3. Continue with this script inside the container"
+    echo
+    echo "   To delete the container later: distrobox rm dps-dev"
+    echo
+    read -p "   Continue testing in host system anyway? (y/N): " -n 1 -r
+    echo
+    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+        echo "   Please run the rest of the tests inside the distrobox container"
+        exit 0
     fi
 fi
 
@@ -104,6 +221,53 @@ else
         sudo dnf install -y git
     elif command -v pacman &> /dev/null; then
         sudo pacman -S git
+    fi
+fi
+
+# Check GUI Libraries for Electron
+echo "🔍 Checking GUI Libraries for Electron..."
+
+# Define required packages by distribution family
+if command -v apt &> /dev/null; then
+    # Debian/Ubuntu packages
+    GUI_PACKAGES="libgtk-3-dev libxss1 libnss3-dev libasound2-dev"
+    PKG_CHECK_CMD="dpkg -l"
+    PKG_INSTALL_CMD="sudo apt install -y"
+elif command -v dnf &> /dev/null; then
+    # Red Hat/Rocky/AlmaLinux packages  
+    GUI_PACKAGES="gtk3-devel libXScrnSaver nss-devel alsa-lib-devel"
+    PKG_CHECK_CMD="rpm -q"
+    PKG_INSTALL_CMD="sudo dnf install -y"
+elif command -v pacman &> /dev/null; then
+    # Arch Linux packages
+    GUI_PACKAGES="gtk3 libxss nss alsa-lib"
+    PKG_CHECK_CMD="pacman -Q"
+    PKG_INSTALL_CMD="sudo pacman -S --noconfirm"
+else
+    echo "  ⚠️  Unknown package manager - skipping GUI library check"
+    GUI_PACKAGES=""
+fi
+
+if [[ -n "$GUI_PACKAGES" ]]; then
+    MISSING_PACKAGES=""
+    
+    for package in $GUI_PACKAGES; do
+        if ! $PKG_CHECK_CMD $package &>/dev/null; then
+            MISSING_PACKAGES="$MISSING_PACKAGES $package"
+        fi
+    done
+    
+    if [[ -n "$MISSING_PACKAGES" ]]; then
+        echo "  ⚠️  Missing GUI libraries:$MISSING_PACKAGES"
+        echo "     Installing required packages..."
+        if $PKG_INSTALL_CMD $MISSING_PACKAGES; then
+            echo "  ✅ GUI libraries installed successfully"
+        else
+            echo "  ❌ Failed to install GUI libraries"
+            echo "     Electron may fail to launch"
+        fi
+    else
+        echo "  ✅ All required GUI libraries are installed"
     fi
 fi
 

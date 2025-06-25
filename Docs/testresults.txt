@@ -1,0 +1,15 @@
+# Things to change 
+
+## Immutable OS
+- Currently the project does not test to see if the Linux OS is immutable. This is mostly an issue if it is trying to install NodeJS. If user is in an immutable distro and NodeJS is not installed it should ask if I want to install NodeJS in a distrobox container, and then make a container. It should briefly explain that it is making an isolated container to install NodeJS, Electron, Git, and anything else needed to set up the install. 
+- If possible it should also install docker in this distro so we can have everything in one and the user can delete the container to uninstall
+- It should install the docker files in the part of the computer that is modifiable, likely /var/home, making a folder like /programs or /opt, depending on whatever is usually convention for linux. 
+
+
+#Linux build bugs
+- The install stated that tailscale IP just returnted as {{TAILSCALE_IP}}, despite the fact that I have tailscale installed on that VM. The host IP address was found correctly, though. 
+- it said failed to launch electron app because i missed some libraries - libgtk-3-dev libxss1 libnss3-dev, libasound2-dev. This should be checked on run and installed as well if needed. 
+- Look in screenshots in my mac folder - the last 3 note some bugs on Electron building - something to do with cannot find module 'electron-reload'
+- nevertheless it did come up - and there were 3 inputs in the beginning.
+
+Let's fix this for now and re-evaluate
