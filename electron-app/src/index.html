@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dual Photo Stack Setup</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div id="app">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <div class="header-left">
+                    <img src="../assets/icon.png" alt="DPS" class="header-icon" onerror="this.style.display='none'">
+                    <h1 class="header-title">Dual Photo Stack</h1>
+                </div>
+                <div class="header-right">
+                    <button id="minimize-btn" class="window-control" title="Minimize">−</button>
+                    <button id="close-btn" class="window-control" title="Close">×</button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <!-- Welcome Screen -->
+            <div id="welcome-screen" class="screen active">
+                <div class="welcome-container">
+                    <div class="welcome-header">
+                        <h2>Welcome to Dual Photo Stack</h2>
+                        <p class="welcome-subtitle">
+                            Deploy coordinated Immich and PhotoPrism photo management with intelligent processing windows
+                        </p>
+                    </div>
+
+                    <div class="deployment-modes">
+                        <h3>Choose your deployment mode:</h3>
+                        
+                        <div class="mode-option" data-mode="dps-only">
+                            <div class="mode-icon">📦</div>
+                            <div class="mode-content">
+                                <h4>DPS Only</h4>
+                                <p>Install Immich + PhotoPrism + Dockge with manual coordination</p>
+                                <ul>
+                                    <li>✅ Quick setup</li>
+                                    <li>✅ Container management with Dockge</li>
+                                    <li>⚙️ Manual processing window management</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <div class="mode-option" data-mode="add-to-semaphore">
+                            <div class="mode-icon">🔗</div>
+                            <div class="mode-content">
+                                <h4>Add to Existing Semaphore</h4>
+                                <p>Connect DPS to your existing Semaphore instance for automation</p>
+                                <ul>
+                                    <li>✅ Use existing Semaphore setup</li>
+                                    <li>✅ Automated processing coordination</li>
+                                    <li>🔧 Requires Semaphore connection details</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <div class="mode-option" data-mode="full-install">
+                            <div class="mode-icon">🚀</div>
+                            <div class="mode-content">
+                                <h4>Full Installation</h4>
+                                <p>Complete setup with local Semaphore for full automation</p>
+                                <ul>
+                                    <li>✅ Complete automation</li>
+                                    <li>✅ Local Semaphore instance</li>
+                                    <li>✅ Processing window coordination</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="welcome-actions">
+                        <button id="continue-btn" class="btn btn-primary" disabled>
+                            Continue with Selected Mode
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- System Check Screen -->
+            <div id="system-check-screen" class="screen">
+                <div class="screen-container">
+                    <div class="screen-header">
+                        <h2>System Requirements Check</h2>
+                        <p>Validating your Linux system for DPS deployment</p>
+                    </div>
+
+                    <div class="system-checks">
+                        <div class="check-item" id="check-platform">
+                            <span class="check-icon">⏳</span>
+                            <span class="check-label">Linux Platform</span>
+                            <span class="check-status">Checking...</span>
+                        </div>
+                        
+                        <div class="check-item" id="check-docker">
+                            <span class="check-icon">⏳</span>
+                            <span class="check-label">Docker Engine</span>
+                            <span class="check-status">Checking...</span>
+                        </div>
+                        
+                        <div class="check-item" id="check-network">
+                            <span class="check-icon">⏳</span>
+                            <span class="check-label">Network Interfaces</span>
+                            <span class="check-status">Checking...</span>
+                        </div>
+                        
+                        <div class="check-item" id="check-permissions">
+                            <span class="check-icon">⏳</span>
+                            <span class="check-label">User Permissions</span>
+                            <span class="check-status">Checking...</span>
+                        </div>
+                    </div>
+
+                    <div class="system-info" id="system-info" style="display: none;">
+                        <h3>System Information</h3>
+                        <div class="info-grid" id="info-grid">
+                            <!-- Dynamic content filled by JavaScript -->
+                        </div>
+                    </div>
+
+                    <div class="screen-actions">
+                        <button id="back-to-welcome" class="btn btn-secondary">Back</button>
+                        <button id="continue-to-config" class="btn btn-primary" disabled>Continue</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Configuration Screen -->
+            <div id="config-screen" class="screen">
+                <div class="screen-container">
+                    <div class="screen-header">
+                        <h2>Configuration</h2>
+                        <p>Set up your photo library and data storage locations</p>
+                    </div>
+
+                    <div class="config-form">
+                        <div class="form-group">
+                            <label for="library-path">Photo Library Location</label>
+                            <p class="form-help">Select the directory containing your photos (will be shared between Immich and PhotoPrism)</p>
+                            <div class="path-input">
+                                <input type="text" id="library-path" readonly placeholder="Click Browse to select...">
+                                <button id="browse-library" class="btn btn-outline">Browse</button>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="data-path">Data Storage Location</label>
+                            <p class="form-help">Directory for databases, caches, and application data</p>
+                            <div class="path-input">
+                                <input type="text" id="data-path" readonly placeholder="Click Browse to select...">
+                                <button id="browse-data" class="btn btn-outline">Browse</button>
+                            </div>
+                        </div>
+
+                        <div class="network-info" id="network-info">
+                            <h3>Detected Network Configuration</h3>
+                            <div class="network-grid" id="network-grid">
+                                <!-- Filled by JavaScript -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="screen-actions">
+                        <button id="back-to-system" class="btn btn-secondary">Back</button>
+                        <button id="continue-to-deploy" class="btn btn-primary" disabled>Continue to Deployment</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Deployment Screen -->
+            <div id="deployment-screen" class="screen">
+                <div class="screen-container">
+                    <div class="screen-header">
+                        <h2>Deployment</h2>
+                        <p>Deploying your Dual Photo Stack configuration</p>
+                    </div>
+
+                    <div class="deployment-progress">
+                        <div class="progress-step" data-step="config">
+                            <span class="step-icon">⏳</span>
+                            <span class="step-label">Generating Configuration</span>
+                            <span class="step-status">Waiting...</span>
+                        </div>
+                        
+                        <div class="progress-step" data-step="network">
+                            <span class="step-icon">⏳</span>
+                            <span class="step-label">Setting Up Network</span>
+                            <span class="step-status">Waiting...</span>
+                        </div>
+                        
+                        <div class="progress-step" data-step="services">
+                            <span class="step-icon">⏳</span>
+                            <span class="step-label">Deploying Services</span>
+                            <span class="step-status">Waiting...</span>
+                        </div>
+                        
+                        <div class="progress-step" data-step="validation">
+                            <span class="step-icon">⏳</span>
+                            <span class="step-label">Validating Deployment</span>
+                            <span class="step-status">Waiting...</span>
+                        </div>
+                    </div>
+
+                    <div class="deployment-log">
+                        <h3>Deployment Log</h3>
+                        <div class="log-container" id="deployment-log">
+                            <!-- Real-time deployment messages -->
+                        </div>
+                    </div>
+
+                    <div class="screen-actions">
+                        <button id="cancel-deployment" class="btn btn-secondary">Cancel</button>
+                        <button id="deploy-btn" class="btn btn-primary">Start Deployment</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Success Screen -->
+            <div id="success-screen" class="screen">
+                <div class="screen-container">
+                    <div class="screen-header">
+                        <h2>🎉 Deployment Successful!</h2>
+                        <p>Your Dual Photo Stack is ready to use</p>
+                    </div>
+
+                    <div class="success-content">
+                        <div class="access-urls">
+                            <h3>Access Your Services</h3>
+                            <div class="url-grid" id="url-grid">
+                                <!-- Filled by JavaScript with access URLs -->
+                            </div>
+                        </div>
+
+                        <div class="next-steps">
+                            <h3>Next Steps</h3>
+                            <ol>
+                                <li>Access <strong>Dockge</strong> to manage your containers</li>
+                                <li>Set up <strong>Immich</strong> mobile app with the server URL</li>
+                                <li>Configure <strong>PhotoPrism</strong> settings and start indexing</li>
+                                <li>Monitor processing coordination in Semaphore (if installed)</li>
+                            </ol>
+                        </div>
+                    </div>
+
+                    <div class="screen-actions">
+                        <button id="open-dockge" class="btn btn-outline">Open Dockge</button>
+                        <button id="finish-btn" class="btn btn-primary">Finish</button>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <div class="footer-content">
+                <span class="footer-text">Dual Photo Stack v1.0.0 - Linux Edition</span>
+                <div class="footer-links">
+                    <a href="#" id="docs-link">Documentation</a>
+                    <a href="#" id="github-link">GitHub</a>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div id="loading-overlay" class="loading-overlay" style="display: none;">
+        <div class="loading-spinner"></div>
+        <p class="loading-text">Please wait...</p>
+    </div>
+
+    <script src="renderer.js"></script>
+</body>
+</html>
