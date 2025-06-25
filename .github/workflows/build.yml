@@ -24,7 +24,7 @@ jobs:
       with:
         node-version: '18'
         cache: 'npm'
-        cache-dependency-path: electron-app/package.json
+        cache-dependency-path: electron-app/package-lock.json
         
     - name: Install system dependencies
       run: |
@@ -34,7 +34,7 @@ jobs:
     - name: Install Node.js dependencies
       working-directory: ./electron-app
       run: |
-        npm ci
+        npm install --verbose
         echo "Dependencies installed successfully" >> ../build.log
         
     - name: Run tests
