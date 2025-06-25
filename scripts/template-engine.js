@@ -72,15 +72,8 @@ class DPSTemplateEngine {
         if (network.LOCAL_NETWORK_IP) break;
       }
 
-      // Detect Tailscale IP
-      try {
-        const tailscaleIP = execSync('tailscale ip --4', { encoding: 'utf8', timeout: 5000 }).trim();
-        if (tailscaleIP && tailscaleIP.startsWith('100.')) {
-          network.TAILSCALE_IP = tailscaleIP;
-        }
-      } catch (error) {
-        console.log('Tailscale not detected or not running');
-      }
+      // Detect Tailscale IP with platform-specific paths
+      network.TAILSCALE_IP = this.getTailscaleIP();
 
     } catch (error) {
       console.error('Network detection error:', error.message);
@@ -89,6 +82,32 @@ class DPSTemplateEngine {
     }
 
     return network;
+  }
+
+  /**
+   * Detect Tailscale IP with cross-platform support
+   */
+  getTailscaleIP() {
+    const commands = [
+      'tailscale ip --4',                                           // Standard Linux/PATH
+      '/usr/bin/tailscale ip --4',                                 // Common Linux location
+      '/Applications/Tailscale.app/Contents/MacOS/Tailscale ip --4' // macOS location
+    ];
+    
+    for (const cmd of commands) {
+      try {
+        const output = execSync(cmd, { encoding: 'utf8', timeout: 5000 }).trim();
+        if (output && output.startsWith('100.')) {
+          console.log(`Tailscale detected via: ${cmd.split(' ')[0]}`);
+          return output;
+        }
+      } catch (error) {
+        continue; // Try next command
+      }
+    }
+    
+    console.log('Tailscale not detected or not running');
+    return null;
   }
 
   /**
@@ -196,7 +215,7 @@ class DPSTemplateEngine {
     Object.entries(config.ports).forEach(([key, bindings]) => {
       const placeholder = `{{${key}}}`;
       if (processed.includes(placeholder)) {
-        processed = processed.replace(placeholder, bindings.join('\\n'));
+        processed = processed.replace(placeholder, bindings.join('\n'));
       }
     });
 
@@ -205,11 +224,44 @@ class DPSTemplateEngine {
 
   /**
    * Get nested value from config object (e.g., "network.LOCAL_NETWORK_IP")
+   * Also flattens config for direct access (e.g., "LIBRARY_PATH")
    */
   getNestedValue(obj, path) {
-    return path.split('.').reduce((current, key) => {
+    // First try direct path lookup
+    const directValue = path.split('.').reduce((current, key) => {
       return current && current[key] !== undefined ? current[key] : undefined;
     }, obj);
+    
+    if (directValue !== undefined) {
+      return directValue;
+    }
+    
+    // Flatten config and try direct key lookup
+    const flattened = this.flattenConfig(obj);
+    return flattened[path];
+  }
+
+  /**
+   * Flatten nested config object for easier template variable access
+   */
+  flattenConfig(obj) {
+    const flattened = {};
+    
+    // Add all nested values with flattened keys
+    const addToFlattened = (source, prefix = '') => {
+      Object.entries(source).forEach(([key, value]) => {
+        if (value && typeof value === 'object' && !Array.isArray(value)) {
+          addToFlattened(value, prefix ? `${prefix}.${key}` : key);
+        } else {
+          const flatKey = prefix ? `${prefix}.${key}` : key;
+          flattened[flatKey] = value;
+          flattened[key] = value; // Also add without prefix for direct access
+        }
+      });
+    };
+    
+    addToFlattened(obj);
+    return flattened;
   }
 
   /**
