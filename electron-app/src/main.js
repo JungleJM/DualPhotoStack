@@ -9,8 +9,9 @@ const fs = require('fs');
 const { spawn } = require('child_process');
 const Store = require('electron-store');
 
-// Import DPS template engine
+// Import DPS components
 const DPSTemplateEngine = require('../../scripts/template-engine');
+const logger = require('./logger');
 
 // Application state
 let mainWindow;
@@ -19,6 +20,7 @@ let templateEngine;
 
 // Initialize application
 function createMainWindow() {
+  logger.info('Creating main window');
   // Create the browser window
   mainWindow = new BrowserWindow({
     width: 1200,
@@ -38,20 +40,24 @@ function createMainWindow() {
   });
 
   // Load the index.html
+  logger.info('Loading main window HTML');
   mainWindow.loadFile(path.join(__dirname, 'index.html'));
 
   // Show window when ready
   mainWindow.once('ready-to-show', () => {
+    logger.info('Main window ready - showing window');
     mainWindow.show();
     
     // Open DevTools in development
     if (process.argv.includes('--dev')) {
+      logger.info('Development mode - opening DevTools');
       mainWindow.webContents.openDevTools();
     }
   });
 
   // Handle window closed
   mainWindow.on('closed', () => {
+    logger.info('Main window closed');
     mainWindow = null;
   });
 
@@ -63,8 +69,12 @@ function createMainWindow() {
 }
 
 // App event handlers
+logger.info('Electron app starting up');
+
 app.whenReady().then(() => {
+  logger.info('Electron app ready - initializing components');
   // Initialize persistent storage
+  logger.info('Initializing persistent storage');
   store = new Store({
     name: 'dps-config',
     defaults: {
@@ -74,11 +84,15 @@ app.whenReady().then(() => {
       lastConfig: null
     }
   });
+  logger.info('Persistent storage initialized');
 
   // Initialize template engine
+  logger.info('Initializing DPS template engine');
   templateEngine = new DPSTemplateEngine();
+  logger.info('Template engine initialized successfully');
 
   // Create main window
+  logger.info('Creating main application window');
   createMainWindow();
 
   // macOS - create window when dock icon clicked
@@ -91,9 +105,22 @@ app.whenReady().then(() => {
 
 // Quit when all windows are closed (except macOS)
 app.on('window-all-closed', () => {
+  logger.info('All windows closed');
   if (process.platform !== 'darwin') {
+    logger.info('Quitting application (non-macOS)');
     app.quit();
   }
+});
+
+// App quit handlers for crash-safe logging
+app.on('before-quit', () => {
+  logger.info('Application about to quit - saving logs');
+  logger.flush();
+});
+
+app.on('will-quit', (event) => {
+  logger.info('Application will quit');
+  logger.flush();
 });
 
 // Security: Prevent new window creation
@@ -191,25 +218,31 @@ ipcMain.handle('config:load', async () => {
 
 // Template engine integration
 ipcMain.handle('template:initialize', async (event, userConfig) => {
+  logger.info('Template initialization requested', { userConfig });
   try {
     const config = await templateEngine.initializeConfig(userConfig);
+    logger.info('Template initialization completed successfully');
     return { success: true, data: config };
   } catch (error) {
+    logger.error('Template initialization failed', error);
     return { success: false, error: error.message };
   }
 });
 
 ipcMain.handle('template:deploy', async (event, config) => {
+  logger.info('Template deployment requested', { config });
   try {
     // Update template engine config
     templateEngine.config = config;
     
     // Deploy services
+    logger.info('Starting service deployment');
     const results = await templateEngine.deployAll();
     
     // Get deployment summary
     const summary = templateEngine.getDeploymentSummary();
     
+    logger.info('Template deployment completed successfully', { results, summary });
     return { 
       success: true, 
       data: { 
@@ -218,29 +251,51 @@ ipcMain.handle('template:deploy', async (event, config) => {
       } 
     };
   } catch (error) {
+    logger.error('Template deployment failed', error);
     return { success: false, error: error.message };
   }
 });
 
 // External URL opening
 ipcMain.handle('shell:openExternal', async (event, url) => {
+  logger.info('External URL open requested', { url });
   try {
     await shell.openExternal(url);
+    logger.info('External URL opened successfully');
     return { success: true };
   } catch (error) {
+    logger.error('Failed to open external URL', error);
     return { success: false, error: error.message };
   }
 });
 
 // Process management
 ipcMain.handle('app:quit', () => {
+  logger.info('Application quit requested');
   app.quit();
 });
 
 ipcMain.handle('app:minimize', () => {
+  logger.info('Window minimize requested');
   if (mainWindow) {
     mainWindow.minimize();
   }
+});
+
+// Logger integration
+ipcMain.handle('logger:getLogFile', () => {
+  logger.info('Log file path requested');
+  return { success: true, data: logger.getLogFile() };
+});
+
+ipcMain.handle('logger:getLogs', () => {
+  logger.info('In-memory logs requested');
+  return { success: true, data: logger.getLogs() };
+});
+
+ipcMain.handle('logger:log', (event, level, message, data) => {
+  logger.log(level, message, data);
+  return { success: true };
 });
 
 // Development helpers
