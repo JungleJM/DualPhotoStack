@@ -132,7 +132,7 @@ jobs:
     - name: Generate release tag
       id: tag
       run: |
-        TAG="v1.0.0-build-${{ github.run_number }}"
+        TAG="v0.25.0-build-${{ github.run_number }}"
         echo "tag=${TAG}" >> $GITHUB_OUTPUT
         echo "Generated tag: ${TAG}"
         
@@ -140,13 +140,29 @@ jobs:
       uses: softprops/action-gh-release@v2
       with:
         tag_name: ${{ steps.tag.outputs.tag }}
-        name: "DPS Build ${{ github.run_number }} - Auto Release"
+        name: "DPS v0.25 Build ${{ github.run_number }} - Infrastructure Complete"
         body: |
-          # Dual Photo Stack - Automated Build ${{ github.run_number }}
+          # Dual Photo Stack v0.25 - Infrastructure Build ${{ github.run_number }}
+          
+          **🚧 PRE-ALPHA BUILD - Infrastructure Testing Only 🚧**
           
           **Built from commit:** ${{ github.sha }}
           **Build date:** ${{ github.run_started_at }}
           **Trigger:** ${{ github.event_name }}
+          
+          ## 🎯 What Works in v0.25:
+          - ✅ Electron app launches successfully
+          - ✅ Core systems initialization  
+          - ✅ Logger system with crash-safe logging
+          - ✅ Template engine loads properly
+          - ✅ Persistent storage operational
+          - ✅ Multi-network detection (localhost, LAN, Tailscale)
+          
+          ## 🚧 Not Yet Tested:
+          - ⏳ Docker template generation
+          - ⏳ Service deployment functionality  
+          - ⏳ Immich/PhotoPrism coordination
+          - ⏳ Configuration wizard workflow
           
           ## 📦 Download Instructions
           

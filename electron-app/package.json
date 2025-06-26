@@ -1,6 +1,6 @@
 {
   "name": "dual-photo-stack",
-  "version": "1.0.0",
+  "version": "0.25.0",
   "description": "Dual Photo Stack - Coordinated Immich and PhotoPrism deployment tool",
   "main": "src/main.js",
   "scripts": {
