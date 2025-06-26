@@ -8,12 +8,15 @@ const https = require('https');
 const os = require('os');
 
 class SimpleRemoteLogger {
-  constructor(enabled = false) {
+  constructor(enabled = false, mainLogger = null) {
     this.enabled = enabled;
     this.pasteId = null;
     this.buffer = [];
     this.flushInterval = null;
     this.sessionId = this.generateSessionId();
+    this.dailyLogFile = null;
+    this.sessionStartTime = new Date().toISOString();
+    this.mainLogger = mainLogger;
     
     if (this.enabled) {
       this.setupRemoteLogging();
@@ -42,13 +45,25 @@ class SimpleRemoteLogger {
         this.flushLogs();
       }, 15000);
       
+      const pastebinUrl = `https://pastebin.com/${this.pasteId}`;
+      const rawUrl = `https://pastebin.com/raw/${this.pasteId}`;
+      
       console.log('');
       console.log('📋 ===== REMOTE LOGS =====');
-      console.log(`🔗 View:    https://pastebin.com/${this.pasteId}`);
-      console.log(`📱 Monitor: https://pastebin.com/raw/${this.pasteId}`);
+      console.log(`🔗 View:    ${pastebinUrl}`);
+      console.log(`📱 Monitor: ${rawUrl}`);
       console.log('📋 ========================');
       console.log('💡 Bookmark this URL - it\'s the same all day for your user!');
       console.log('');
+      
+      // Also log the URL to the main logger so it appears in local log files
+      if (this.mainLogger && this.mainLogger.info) {
+        this.mainLogger.info('🔗 PASTEBIN_URL', { 
+          url: pastebinUrl,
+          raw: rawUrl,
+          sessionId: this.sessionId 
+        });
+      }
     }).catch(error => {
       console.error('❌ Failed to setup remote logging:', error.message);
       console.log('💡 Falling back to local logging only');

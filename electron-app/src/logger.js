@@ -59,7 +59,8 @@ class DPSLogger {
                                 process.argv.includes('--local-only');
     
     if (!disableRemoteLogging) {
-      this.remoteLogger = new SimpleRemoteLogger(true);
+      // Pass reference to main logger so remote logger can log URLs to local files
+      this.remoteLogger = new SimpleRemoteLogger(true, this);
     } else {
       console.log('📝 Remote logging disabled via command line flag');
     }
