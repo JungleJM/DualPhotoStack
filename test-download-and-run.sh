@@ -31,11 +31,11 @@ cleanup() {
 }
 trap cleanup EXIT
 
-# Get latest release information
+# Get latest release information using public API (including pre-releases)
 log "🔍 Getting latest release information..."
-LATEST_RELEASE=$(gh release list --repo "$REPO" --limit 1 --json tagName,name --jq '.[0]')
-TAG=$(echo "$LATEST_RELEASE" | jq -r '.tagName')
-RELEASE_NAME=$(echo "$LATEST_RELEASE" | jq -r '.name')
+RELEASES_JSON=$(curl -s "https://api.github.com/repos/$REPO/releases")
+TAG=$(echo "$RELEASES_JSON" | grep '"tag_name"' | head -1 | sed 's/.*"tag_name": "\([^"]*\)".*/\1/')
+RELEASE_NAME=$(echo "$RELEASES_JSON" | grep '"name"' | head -1 | sed 's/.*"name": "\([^"]*\)".*/\1/')
 
 log "📦 Latest release: $TAG"
 log "📋 Release name: $RELEASE_NAME"
@@ -76,19 +76,39 @@ fi
 
 # Install required dependencies (if needed)
 log "📋 Checking system dependencies..."
-MISSING_DEPS=""
-for dep in libgtk-3-0 libxss1 libnss3 libasound2; do
-    if ! dpkg -l | grep -q "^ii  $dep "; then
-        MISSING_DEPS="$MISSING_DEPS $dep"
+if command -v dpkg >/dev/null 2>&1; then
+    # Debian/Ubuntu system
+    MISSING_DEPS=""
+    for dep in libgtk-3-0 libxss1 libnss3 libasound2; do
+        if ! dpkg -l | grep -q "^ii  $dep "; then
+            MISSING_DEPS="$MISSING_DEPS $dep"
+        fi
+    done
+    
+    if [ -n "$MISSING_DEPS" ]; then
+        log "⚠️  Missing dependencies:$MISSING_DEPS"
+        log "💡 Run: sudo apt install$MISSING_DEPS"
+    else
+        log "✅ All dependencies present"
     fi
-done
-
-if [ -n "$MISSING_DEPS" ]; then
-    log "⚠️  Missing dependencies:$MISSING_DEPS"
-    log "💡 Run: sudo apt install$MISSING_DEPS"
-    # For testing, we'll continue anyway
+elif command -v rpm >/dev/null 2>&1; then
+    # Fedora/RHEL system
+    MISSING_DEPS=""
+    for dep in gtk3 libXScrnSaver nss alsa-lib; do
+        if ! rpm -q "$dep" >/dev/null 2>&1; then
+            MISSING_DEPS="$MISSING_DEPS $dep"
+        fi
+    done
+    
+    if [ -n "$MISSING_DEPS" ]; then
+        log "⚠️  Missing dependencies:$MISSING_DEPS"
+        log "💡 Run: sudo dnf install$MISSING_DEPS"
+    else
+        log "✅ All dependencies present"
+    fi
 else
-    log "✅ All dependencies present"
+    log "⚠️  Cannot check dependencies - unknown package manager"
+    log "💡 Ensure GTK3, X11, NSS, and ALSA libraries are installed"
 fi
 
 # Test startup (headless mode with timeout)
@@ -103,7 +123,7 @@ Xvfb :99 -screen 0 1024x768x24 > /dev/null 2>&1 &
 XVFB_PID=$!
 sleep 1
 
-timeout 10s ./DPS-Linux-x64.AppImage --no-sandbox > app-output.log 2>&1 &
+timeout 10s ./DPS-Linux-x64.AppImage --no-sandbox --verbose-startup --force-window-visible > app-output.log 2>&1 &
 APP_PID=$!
 
 sleep 5
@@ -122,7 +142,7 @@ EOF
 chmod +x test-startup.sh
 
 # Run the test (try without virtual display first, fallback to Xvfb)
-if timeout 10s ./"$APPIMAGE_FILE" --no-sandbox --headless > app-output.log 2>&1; then
+if timeout 10s ./"$APPIMAGE_FILE" --no-sandbox --headless --verbose-startup --force-window-visible > app-output.log 2>&1; then
     log "✅ App started successfully (no display)"
 elif ./test-startup.sh; then
     log "✅ App started successfully (virtual display)"

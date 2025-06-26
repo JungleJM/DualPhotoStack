@@ -52,33 +52,40 @@ function createMainWindow() {
   mainWindow.once('ready-to-show', () => {
     logger.info('Main window ready - showing window');
     
-    // Show and focus the window aggressively
+    // Basic window display
     mainWindow.show();
-    mainWindow.focus();
-    mainWindow.moveTop();
     
-    // Mission completed output for testing
-    console.log('🎉 DPS MISSION COMPLETED: Electron app started successfully!');
-    console.log('✅ Window created and displayed');
-    console.log('✅ Logger system operational');
-    console.log('✅ Template engine initialized');
-    console.log('📍 Log file location:', logger.getLogFile());
-    console.log('📐 Window position:', mainWindow.getBounds());
+    // Aggressive window visibility (only if requested)
+    if (process.argv.includes('--force-window-visible')) {
+      logger.info('Force window visible mode - applying aggressive positioning');
+      mainWindow.focus();
+      mainWindow.moveTop();
+    }
     
-    // Additional startup verification after a short delay
-    setTimeout(() => {
-      console.log('🔍 DPS STARTUP VERIFICATION:');
-      console.log('  📱 Window visible:', !mainWindow.isDestroyed() && mainWindow.isVisible());
-      console.log('  🎯 Window focused:', mainWindow.isFocused());
-      console.log('  📐 Window bounds:', mainWindow.getBounds());
-      console.log('  💾 Store accessible:', !!store);
-      console.log('  🔧 Template engine ready:', !!templateEngine);
-      console.log('  📝 Logger active:', !!logger && !!logger.getLogFile());
-      console.log('');
-      console.log('🚀 DPS IS READY FOR USE!');
-      console.log('👀 If you cannot see the window, check your taskbar or press Alt+Tab');
-      console.log('');
-    }, 1000);
+    // Enhanced logging (only if requested)
+    if (process.argv.includes('--verbose-startup')) {
+      console.log('🎉 DPS MISSION COMPLETED: Electron app started successfully!');
+      console.log('✅ Window created and displayed');
+      console.log('✅ Logger system operational');
+      console.log('✅ Template engine initialized');
+      console.log('📍 Log file location:', logger.getLogFile());
+      console.log('📐 Window position:', mainWindow.getBounds());
+      
+      // Additional startup verification after a short delay
+      setTimeout(() => {
+        console.log('🔍 DPS STARTUP VERIFICATION:');
+        console.log('  📱 Window visible:', !mainWindow.isDestroyed() && mainWindow.isVisible());
+        console.log('  🎯 Window focused:', mainWindow.isFocused());
+        console.log('  📐 Window bounds:', mainWindow.getBounds());
+        console.log('  💾 Store accessible:', !!store);
+        console.log('  🔧 Template engine ready:', !!templateEngine);
+        console.log('  📝 Logger active:', !!logger && !!logger.getLogFile());
+        console.log('');
+        console.log('🚀 DPS IS READY FOR USE!');
+        console.log('👀 If you cannot see the window, check your taskbar or press Alt+Tab');
+        console.log('');
+      }, 1000);
+    }
     
     // Open DevTools in development
     if (process.argv.includes('--dev')) {
