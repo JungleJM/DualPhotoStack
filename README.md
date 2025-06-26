@@ -66,13 +66,31 @@ DualPhotoStack/
 
 ### 🚧 In Development: Phase 2 - Electron Application
 
-## 🧪 Development & Testing
+## 🚀 Quick Start
 
-### Quick Start
-1. **Download** the latest release for your platform
+### Download and Run Latest Release
+
+```bash
+# Download the latest DPS release
+wget $(curl -s https://api.github.com/repos/JungleJM/DualPhotoStack/releases/latest | grep -o "https://.*DPS-Linux-x64\.AppImage")
+
+# Make executable and run
+chmod +x DPS-Linux-x64.AppImage
+./DPS-Linux-x64.AppImage
+```
+
+**Alternative one-liner:**
+```bash
+wget $(curl -s https://api.github.com/repos/JungleJM/DualPhotoStack/releases/latest | grep -o "https://.*DPS-Linux-x64\.AppImage") && chmod +x DPS-Linux-x64.AppImage && ./DPS-Linux-x64.AppImage
+```
+
+### Manual Installation
+1. **Download** the latest release from [GitHub Releases](https://github.com/JungleJM/DualPhotoStack/releases/latest)
 2. **Make executable**: `chmod +x DPS-Linux-x64.AppImage`  
 3. **Run**: `./DPS-Linux-x64.AppImage`
 4. **Follow** the configuration wizard
+
+## 🧪 Development & Testing
 
 ### Clean Installation Testing
 For repeated testing on the same system:
