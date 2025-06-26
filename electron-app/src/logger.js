@@ -6,12 +6,15 @@
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
+const SimpleRemoteLogger = require('./simple-remote-logger');
 
 class DPSLogger {
   constructor() {
     this.logs = [];
     this.logFile = null;
+    this.remoteLogger = null;
     this.initializeLogFile();
+    this.setupRemoteLogging();
     this.setupProcessHandlers();
   }
 
@@ -46,6 +49,17 @@ class DPSLogger {
     } catch (error) {
       console.error('Failed to initialize log file:', error);
       this.logFile = null;
+    }
+  }
+
+  setupRemoteLogging() {
+    // Check for remote logging flags
+    const enableRemoteLogging = process.argv.includes('--remote-logs') || 
+                               process.argv.includes('--vm-testing') ||
+                               process.argv.includes('--remote-debug');
+    
+    if (enableRemoteLogging) {
+      this.remoteLogger = new SimpleRemoteLogger(true);
     }
   }
 
@@ -115,6 +129,11 @@ class DPSLogger {
 
     // Write to file immediately for crash safety
     this.writeToFile(fileMsg);
+
+    // Send to remote logger if enabled
+    if (this.remoteLogger) {
+      this.remoteLogger.log(level.toUpperCase(), message, data);
+    }
 
     // Keep memory buffer manageable
     if (this.logs.length > 1000) {
@@ -200,10 +219,15 @@ class DPSLogger {
     }
   }
 
-  saveAndExit(reason) {
+  async saveAndExit(reason) {
     try {
       this.info(`Application exiting: ${reason}`);
       this.flush();
+      
+      // Shutdown remote logger if enabled
+      if (this.remoteLogger) {
+        await this.remoteLogger.shutdown();
+      }
       
       const exitMessage = [
         '',

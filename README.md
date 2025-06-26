@@ -88,6 +88,23 @@ For repeated testing on the same system:
 ./test-download-and-run.sh --localdev --interactive
 ```
 
+### Remote Logging for VM Testing
+Stream logs to GitHub Gist for monitoring from any device:
+
+```bash
+# Enable remote logging with any test mode
+./test-download-and-run.sh --localdev --interactive --remote-logs
+
+# Or use the dedicated remote logging test
+./test-remote-logging.sh
+```
+
+The remote logger will:
+- 📡 Create a private GitHub Gist for the session
+- 🔄 Stream all logs in real-time (every 10 seconds)
+- 📱 Provide a URL you can monitor from any device
+- 🧹 Automatically close the session when the app exits
+
 ### Uninstall Scripts
 - **`uninstall-dps.sh`**: Complete removal of all DPS files, Docker containers, logs, and configuration
 - **`verify-clean-install.sh`**: Verification that system is clean for fresh installation

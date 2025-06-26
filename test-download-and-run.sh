@@ -43,8 +43,19 @@ for arg in "$@"; do
         --localdev|-l)
             LOCALDEV_MODE=true
             ;;
+        --remote-logs|--vm-testing)
+            REMOTE_LOGS=true
+            ;;
     esac
 done
+
+# Set remote logging flag
+if [ "$REMOTE_LOGS" = "true" ]; then
+    REMOTE_FLAG="--remote-logs"
+    log "📡 Remote logging enabled - logs will be streamed to GitHub Gist"
+else
+    REMOTE_FLAG=""
+fi
 
 # Check for localdev mode early
 if [ "$LOCALDEV_MODE" = "true" ]; then
@@ -246,24 +257,24 @@ if [ "$LOCALDEV_MODE" = "true" ]; then
     log "🎮 Starting DPS in LOCALDEV mode..."
     cd "$PROJECT_DIR/electron-app"
     if [ "$INTERACTIVE_MODE" = "true" ]; then
-        log "🔧 Running: npm start -- --verbose-startup --force-window-visible"
-        timeout ${TIMEOUT_SECONDS}s npm start -- --verbose-startup --force-window-visible > "$TEMP_DIR/app-output.log" 2>&1
+        log "🔧 Running: npm start -- --verbose-startup --force-window-visible $REMOTE_FLAG"
+        timeout ${TIMEOUT_SECONDS}s npm start -- --verbose-startup --force-window-visible $REMOTE_FLAG > "$TEMP_DIR/app-output.log" 2>&1
     else
-        log "🔧 Running: npm start -- --no-sandbox --headless --verbose-startup"
-        timeout ${TIMEOUT_SECONDS}s npm start -- --no-sandbox --headless --verbose-startup > "$TEMP_DIR/app-output.log" 2>&1
+        log "🔧 Running: npm start -- --no-sandbox --headless --verbose-startup $REMOTE_FLAG"
+        timeout ${TIMEOUT_SECONDS}s npm start -- --no-sandbox --headless --verbose-startup $REMOTE_FLAG > "$TEMP_DIR/app-output.log" 2>&1
     fi
     cd "$TEMP_DIR"
 elif [ "$INTERACTIVE_MODE" = "true" ]; then
     # Interactive mode - run with display for user interaction
     log "🎮 Starting DPS in INTERACTIVE mode..."
-    if timeout ${TIMEOUT_SECONDS}s ./"$APPIMAGE_FILE" --verbose-startup --force-window-visible > app-output.log 2>&1; then
+    if timeout ${TIMEOUT_SECONDS}s ./"$APPIMAGE_FILE" --verbose-startup --force-window-visible $REMOTE_FLAG > app-output.log 2>&1; then
         log "✅ Interactive session completed"
     else
         log "⚠️  Interactive session ended (timeout or closed)"
     fi
 else
     # Automated testing mode
-    if timeout ${TIMEOUT_SECONDS}s ./"$APPIMAGE_FILE" --no-sandbox --headless --verbose-startup --force-window-visible > app-output.log 2>&1; then
+    if timeout ${TIMEOUT_SECONDS}s ./"$APPIMAGE_FILE" --no-sandbox --headless --verbose-startup --force-window-visible $REMOTE_FLAG > app-output.log 2>&1; then
         log "✅ App started successfully (no display)"
     elif ./test-startup.sh; then
         log "✅ App started successfully (virtual display)"
