@@ -78,7 +78,10 @@ function initializeEventListeners() {
       defaultPath: process.env.HOME + '/Pictures'
     });
     
-    if (!result.canceled && result.filePaths.length > 0) {
+    if (result.needsManualEntry) {
+      alert('File browser unavailable. Please type the directory path manually in the text field.');
+      document.getElementById('library-path').focus();
+    } else if (!result.canceled && result.filePaths.length > 0) {
       document.getElementById('library-path').value = result.filePaths[0];
       validateConfigForm();
     }
@@ -90,7 +93,10 @@ function initializeEventListeners() {
       defaultPath: process.env.HOME + '/dps-data'
     });
     
-    if (!result.canceled && result.filePaths.length > 0) {
+    if (result.needsManualEntry) {
+      alert('File browser unavailable. Please type the directory path manually in the text field.');
+      document.getElementById('data-path').focus();
+    } else if (!result.canceled && result.filePaths.length > 0) {
       document.getElementById('data-path').value = result.filePaths[0];
       validateConfigForm();
     }

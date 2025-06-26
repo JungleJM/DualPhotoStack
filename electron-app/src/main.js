@@ -256,10 +256,11 @@ async function checkDocker() {
   });
 }
 
-// File/directory selection
+// File/directory selection with GTK compatibility workaround
 ipcMain.handle('dialog:selectDirectory', async (event, options = {}) => {
   logger.info('File dialog requested', { options });
   try {
+    // Try native dialog first
     const result = await dialog.showOpenDialog(mainWindow, {
       properties: ['openDirectory'],
       title: options.title || 'Select Directory',
@@ -267,16 +268,33 @@ ipcMain.handle('dialog:selectDirectory', async (event, options = {}) => {
       buttonLabel: options.buttonLabel || 'Select'
     });
     
-    logger.info('File dialog completed', { result });
+    logger.info('File dialog completed successfully', { result });
     return result;
   } catch (error) {
-    logger.error('File dialog failed', error);
-    return { 
-      success: false, 
-      error: error.message,
-      canceled: true,
-      filePaths: []
-    };
+    logger.error('Native file dialog failed, trying workaround', error);
+    
+    // GTK compatibility issue workaround - try without parent window
+    try {
+      const fallbackResult = await dialog.showOpenDialog(null, {
+        properties: ['openDirectory'],
+        title: options.title || 'Select Directory',
+        defaultPath: options.defaultPath || process.env.HOME,
+        buttonLabel: options.buttonLabel || 'Select'
+      });
+      
+      logger.info('Fallback dialog completed', { fallbackResult });
+      return fallbackResult;
+    } catch (fallbackError) {
+      logger.error('Both native and fallback dialogs failed', fallbackError);
+      
+      // Return manual entry mode indication
+      return { 
+        canceled: true,
+        filePaths: [],
+        error: 'File dialog unavailable - please enter path manually',
+        needsManualEntry: true
+      };
+    }
   }
 });
 
