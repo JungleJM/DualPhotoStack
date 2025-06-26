@@ -21,26 +21,34 @@ class SimpleRemoteLogger {
   }
 
   generateSessionId() {
-    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
     const hostname = os.hostname();
-    const random = Math.random().toString(36).substring(2, 8);
-    return `dps-${hostname}-${timestamp}-${random}`;
+    const username = os.userInfo().username;
+    const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+    
+    // Create a deterministic session ID for the day
+    // This allows the same user to reconnect to the same Pastebin
+    return `dps-${hostname}-${username}-${today}`;
   }
 
   setupRemoteLogging() {
-    console.log('🌐 Simple remote logging enabled for VM testing');
-    console.log(`📡 Session ID: ${this.sessionId}`);
+    console.log('🌐 Remote logging enabled by default for easier troubleshooting');
+    console.log(`📡 Daily session ID: ${this.sessionId}`);
+    console.log('💡 To disable remote logging, use: --no-remote-logs');
     
-    // Create initial paste
+    // Create initial paste or append to existing daily paste
     this.createPaste().then(() => {
       // Start periodic flushing every 15 seconds
       this.flushInterval = setInterval(() => {
         this.flushLogs();
       }, 15000);
       
-      console.log(`📋 Logs streaming to: https://pastebin.com/${this.pasteId}`);
-      console.log(`📱 Monitor from any device: https://pastebin.com/raw/${this.pasteId}`);
-      console.log(`🔗 Share this URL to monitor remotely!`);
+      console.log('');
+      console.log('📋 ===== REMOTE LOGS =====');
+      console.log(`🔗 View:    https://pastebin.com/${this.pasteId}`);
+      console.log(`📱 Monitor: https://pastebin.com/raw/${this.pasteId}`);
+      console.log('📋 ========================');
+      console.log('💡 Bookmark this URL - it\'s the same all day for your user!');
+      console.log('');
     }).catch(error => {
       console.error('❌ Failed to setup remote logging:', error.message);
       console.log('💡 Falling back to local logging only');
@@ -49,18 +57,24 @@ class SimpleRemoteLogger {
   }
 
   async createPaste() {
-    const initialContent = `DPS Remote Logs - ${this.sessionId}
-
-Session started: ${new Date().toISOString()}
+    const sessionStart = new Date().toISOString();
+    const sessionMarker = `
+=== NEW SESSION: ${sessionStart} ===
 Platform: ${process.platform} ${process.arch}
 Node.js: ${process.version}
 Hostname: ${os.hostname()}
 User: ${os.userInfo().username}
-
-Live Log Stream:
-================
+Session: ${this.sessionId}
+=====================================
 
 `;
+
+    const initialContent = `DPS Daily Remote Logs - ${this.sessionId}
+
+Daily log for: ${new Date().toDateString()}
+All DPS sessions for this user/hostname will appear here.
+
+${sessionMarker}`;
 
     // Hardcoded Pastebin API key for VM testing convenience
     const PASTEBIN_API_KEY = '4bbDkjhx4csluMt_eYyHHAyrqtSG7Wnt';

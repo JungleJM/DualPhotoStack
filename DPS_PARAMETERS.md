@@ -80,11 +80,16 @@ This document lists all available command-line parameters and flags for the Dual
 - Applies focus and moveTop operations
 - Useful for headless or VM environments
 
-#### `--remote-logs` / `--vm-testing` / `--remote-debug`
-**Description**: Enable remote logging in Electron app
-- Activates SimpleRemoteLogger
-- Streams logs to Pastebin with hardcoded API key
-- Any of these three flags will enable remote logging
+#### `--no-remote-logs` / `--local-only`
+**Description**: Disable remote logging (enabled by default)
+- Remote logging is ON by default for easier troubleshooting
+- Streams logs to daily Pastebin with hardcoded API key
+- Use these flags to disable if you want local-only logging
+
+#### `--remote-logs` / `--vm-testing` / `--remote-debug` (Legacy)
+**Description**: Force enable remote logging (now default)
+- These flags are no longer needed (remote logging is default)
+- Kept for backward compatibility
 
 ### Example Electron Usage
 
