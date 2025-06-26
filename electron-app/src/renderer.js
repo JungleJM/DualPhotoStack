@@ -73,32 +73,54 @@ function initializeEventListeners() {
 
   // Configuration screen
   document.getElementById('browse-library').addEventListener('click', async () => {
-    const result = await electronAPI.dialog.selectDirectory({
-      title: 'Select Photo Library Directory',
-      defaultPath: process.env.HOME + '/Pictures'
-    });
-    
-    if (result.needsManualEntry) {
-      alert('File browser unavailable. Please type the directory path manually in the text field.');
-      document.getElementById('library-path').focus();
-    } else if (!result.canceled && result.filePaths.length > 0) {
-      document.getElementById('library-path').value = result.filePaths[0];
-      validateConfigForm();
+    console.log('🔍 RENDERER: Browse library button clicked');
+    try {
+      console.log('🔍 RENDERER: Calling electronAPI.dialog.selectDirectory...');
+      const result = await electronAPI.dialog.selectDirectory({
+        title: 'Select Photo Library Directory'
+      });
+      
+      console.log('🔍 RENDERER: Dialog result received:', result);
+      
+      if (result.needsManualEntry) {
+        console.log('📝 RENDERER: Manual entry mode required');
+        alert('File browser unavailable. Please type the directory path manually in the text field.');
+        document.getElementById('library-path').focus();
+      } else if (!result.canceled && result.filePaths.length > 0) {
+        console.log('✅ RENDERER: Directory selected:', result.filePaths[0]);
+        document.getElementById('library-path').value = result.filePaths[0];
+        validateConfigForm();
+      } else {
+        console.log('❌ RENDERER: Dialog canceled or no selection');
+      }
+    } catch (error) {
+      console.error('❌ RENDERER: Error in browse library handler:', error);
     }
   });
 
   document.getElementById('browse-data').addEventListener('click', async () => {
-    const result = await electronAPI.dialog.selectDirectory({
-      title: 'Select Data Storage Directory',
-      defaultPath: process.env.HOME + '/dps-data'
-    });
-    
-    if (result.needsManualEntry) {
-      alert('File browser unavailable. Please type the directory path manually in the text field.');
-      document.getElementById('data-path').focus();
-    } else if (!result.canceled && result.filePaths.length > 0) {
-      document.getElementById('data-path').value = result.filePaths[0];
-      validateConfigForm();
+    console.log('🔍 RENDERER: Browse data button clicked');
+    try {
+      console.log('🔍 RENDERER: Calling electronAPI.dialog.selectDirectory for data...');
+      const result = await electronAPI.dialog.selectDirectory({
+        title: 'Select Data Storage Directory'
+      });
+      
+      console.log('🔍 RENDERER: Data dialog result received:', result);
+      
+      if (result.needsManualEntry) {
+        console.log('📝 RENDERER: Manual entry mode required for data');
+        alert('File browser unavailable. Please type the directory path manually in the text field.');
+        document.getElementById('data-path').focus();
+      } else if (!result.canceled && result.filePaths.length > 0) {
+        console.log('✅ RENDERER: Data directory selected:', result.filePaths[0]);
+        document.getElementById('data-path').value = result.filePaths[0];
+        validateConfigForm();
+      } else {
+        console.log('❌ RENDERER: Data dialog canceled or no selection');
+      }
+    } catch (error) {
+      console.error('❌ RENDERER: Error in browse data handler:', error);
     }
   });
 

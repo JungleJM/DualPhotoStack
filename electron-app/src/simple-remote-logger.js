@@ -40,6 +40,7 @@ class SimpleRemoteLogger {
       
       console.log(`📋 Logs streaming to: https://pastebin.com/${this.pasteId}`);
       console.log(`📱 Monitor from any device: https://pastebin.com/raw/${this.pasteId}`);
+      console.log(`🔗 Share this URL to monitor remotely!`);
     }).catch(error => {
       console.error('❌ Failed to setup remote logging:', error.message);
       console.log('💡 Falling back to local logging only');
@@ -61,9 +62,12 @@ Live Log Stream:
 
 `;
 
+    // Hardcoded Pastebin API key for VM testing convenience
+    const PASTEBIN_API_KEY = '4bbDkjhx4csluMt_eYyHHAyrqtSG7Wnt';
+    
     return new Promise((resolve, reject) => {
       const postData = new URLSearchParams({
-        'api_dev_key': 'guest', // Using guest mode
+        'api_dev_key': PASTEBIN_API_KEY,
         'api_option': 'paste',
         'api_paste_code': initialContent,
         'api_paste_name': `DPS VM Test - ${this.sessionId}`,
