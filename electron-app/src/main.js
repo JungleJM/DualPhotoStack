@@ -169,6 +169,31 @@ app.on('will-quit', (event) => {
   logger.flush();
 });
 
+// Process crash handlers
+process.on('uncaughtException', (error) => {
+  logger.error('Uncaught Exception - Application will crash!', error);
+  logger.flush();
+  console.error('FATAL ERROR:', error);
+  process.exit(1);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  logger.error('Unhandled Promise Rejection', { reason, promise });
+  logger.flush();
+  console.error('UNHANDLED REJECTION:', reason);
+});
+
+// Electron crash handlers
+app.on('child-process-gone', (event, details) => {
+  logger.error('Child process crashed', details);
+  logger.flush();
+});
+
+app.on('render-process-gone', (event, webContents, details) => {
+  logger.error('Renderer process crashed', details);
+  logger.flush();
+});
+
 // Security: Prevent new window creation
 app.on('web-contents-created', (event, contents) => {
   contents.on('new-window', (navigationEvent, navigationURL) => {
@@ -233,14 +258,26 @@ async function checkDocker() {
 
 // File/directory selection
 ipcMain.handle('dialog:selectDirectory', async (event, options = {}) => {
-  const result = await dialog.showOpenDialog(mainWindow, {
-    properties: ['openDirectory'],
-    title: options.title || 'Select Directory',
-    defaultPath: options.defaultPath || process.env.HOME,
-    buttonLabel: options.buttonLabel || 'Select'
-  });
-  
-  return result;
+  logger.info('File dialog requested', { options });
+  try {
+    const result = await dialog.showOpenDialog(mainWindow, {
+      properties: ['openDirectory'],
+      title: options.title || 'Select Directory',
+      defaultPath: options.defaultPath || process.env.HOME,
+      buttonLabel: options.buttonLabel || 'Select'
+    });
+    
+    logger.info('File dialog completed', { result });
+    return result;
+  } catch (error) {
+    logger.error('File dialog failed', error);
+    return { 
+      success: false, 
+      error: error.message,
+      canceled: true,
+      filePaths: []
+    };
+  }
 });
 
 // Configuration management
