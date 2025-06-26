@@ -36,7 +36,12 @@ function createMainWindow() {
     icon: path.join(__dirname, '..', 'assets', 'icon.png'),
     title: 'Dual Photo Stack Setup',
     titleBarStyle: 'default',
-    show: false // Don't show until ready
+    show: false, // Don't show until ready
+    center: true, // Center the window on screen
+    alwaysOnTop: false, // Don't force on top, but ensure visibility
+    skipTaskbar: false, // Show in taskbar
+    focusable: true, // Allow focus
+    resizable: true
   });
 
   // Load the index.html
@@ -46,7 +51,11 @@ function createMainWindow() {
   // Show window when ready
   mainWindow.once('ready-to-show', () => {
     logger.info('Main window ready - showing window');
+    
+    // Show and focus the window aggressively
     mainWindow.show();
+    mainWindow.focus();
+    mainWindow.moveTop();
     
     // Mission completed output for testing
     console.log('🎉 DPS MISSION COMPLETED: Electron app started successfully!');
@@ -54,16 +63,20 @@ function createMainWindow() {
     console.log('✅ Logger system operational');
     console.log('✅ Template engine initialized');
     console.log('📍 Log file location:', logger.getLogFile());
+    console.log('📐 Window position:', mainWindow.getBounds());
     
     // Additional startup verification after a short delay
     setTimeout(() => {
       console.log('🔍 DPS STARTUP VERIFICATION:');
       console.log('  📱 Window visible:', !mainWindow.isDestroyed() && mainWindow.isVisible());
+      console.log('  🎯 Window focused:', mainWindow.isFocused());
+      console.log('  📐 Window bounds:', mainWindow.getBounds());
       console.log('  💾 Store accessible:', !!store);
       console.log('  🔧 Template engine ready:', !!templateEngine);
       console.log('  📝 Logger active:', !!logger && !!logger.getLogFile());
       console.log('');
       console.log('🚀 DPS IS READY FOR USE!');
+      console.log('👀 If you cannot see the window, check your taskbar or press Alt+Tab');
       console.log('');
     }, 1000);
     

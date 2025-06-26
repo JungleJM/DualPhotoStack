@@ -55,6 +55,20 @@ electron-app/out/
 
 # Test outputs
 /tmp/dps-*
+test-download-and-run.sh
+*.AppImage
+*.deb
+
+# DPS runtime logs and configs
+/var/home/*/.*config/dps/
+~/.config/dps/
+.config/dps/
+
+# Local testing artifacts
+app-output.log
+test-results.log
+**/dps-*.log
+debug-file-browser.js
 
 # macOS
 .AppleDouble
