@@ -10,7 +10,7 @@ const { spawn } = require('child_process');
 const Store = require('electron-store');
 
 // Import DPS components
-const DPSTemplateEngine = require('../../scripts/template-engine');
+const DPSTemplateEngine = require('../scripts/template-engine');
 const logger = require('./logger');
 
 // Application state

@@ -38,6 +38,8 @@
     "files": [
       "src/**/*",
       "assets/**/*",
+      "scripts/**/*",
+      "docker-templates/**/*",
       "node_modules/**/*"
     ],
     "linux": {
