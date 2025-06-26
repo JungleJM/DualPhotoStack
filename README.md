@@ -66,6 +66,33 @@ DualPhotoStack/
 
 ### 🚧 In Development: Phase 2 - Electron Application
 
+## 🧪 Development & Testing
+
+### Quick Start
+1. **Download** the latest release for your platform
+2. **Make executable**: `chmod +x DPS-Linux-x64.AppImage`  
+3. **Run**: `./DPS-Linux-x64.AppImage`
+4. **Follow** the configuration wizard
+
+### Clean Installation Testing
+For repeated testing on the same system:
+
+```bash
+# Completely remove DPS and all related files
+./uninstall-dps.sh
+
+# Verify system is clean for fresh install
+./verify-clean-install.sh
+
+# Test with local development code
+./test-download-and-run.sh --localdev --interactive
+```
+
+### Uninstall Scripts
+- **`uninstall-dps.sh`**: Complete removal of all DPS files, Docker containers, logs, and configuration
+- **`verify-clean-install.sh`**: Verification that system is clean for fresh installation
+- **`test-download-and-run.sh`**: Automated testing with `--localdev` mode for development
+
 ## 📖 Documentation
 
 - **[Implementation Plan](Docs/IMPLEMENTATION_PLAN.md)** - Complete development roadmap
