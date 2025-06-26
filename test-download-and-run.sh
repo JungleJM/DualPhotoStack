@@ -34,8 +34,13 @@ trap cleanup EXIT
 # Get latest release information using public API (including pre-releases)
 log "🔍 Getting latest release information..."
 RELEASES_JSON=$(curl -s "https://api.github.com/repos/$REPO/releases")
-TAG=$(echo "$RELEASES_JSON" | grep '"tag_name"' | head -1 | sed 's/.*"tag_name": "\([^"]*\)".*/\1/')
-RELEASE_NAME=$(echo "$RELEASES_JSON" | grep '"name"' | head -1 | sed 's/.*"name": "\([^"]*\)".*/\1/')
+
+# Get the highest build number from v0.25.x releases
+V025_RELEASES=$(echo "$RELEASES_JSON" | grep '"tag_name".*v0\.25\.' | sed 's/.*"tag_name": "\([^"]*\)".*/\1/')
+TAG=$(echo "$V025_RELEASES" | sort -V | tail -1)
+
+# Get the corresponding release name
+RELEASE_NAME=$(echo "$RELEASES_JSON" | grep -A5 -B5 "\"tag_name\": \"$TAG\"" | grep '"name"' | head -1 | sed 's/.*"name": "\([^"]*\)".*/\1/')
 
 log "📦 Latest release: $TAG"
 log "📋 Release name: $RELEASE_NAME"
