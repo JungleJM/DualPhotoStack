@@ -71,8 +71,8 @@ DualPhotoStack/
 ### Download and Run Latest Release
 
 ```bash
-# Download the latest DPS release
-wget $(curl -s https://api.github.com/repos/JungleJM/DualPhotoStack/releases/latest | grep -o "https://.*DPS-Linux-x64\.AppImage")
+# Download the latest DPS release (includes prereleases)
+wget $(curl -s https://api.github.com/repos/JungleJM/DualPhotoStack/releases | jq -r '.[0].assets[] | select(.name | contains("DPS-Linux-x64.AppImage")) | .browser_download_url')
 
 # Make executable and run
 chmod +x DPS-Linux-x64.AppImage
@@ -81,11 +81,19 @@ chmod +x DPS-Linux-x64.AppImage
 
 **Alternative one-liner:**
 ```bash
-wget $(curl -s https://api.github.com/repos/JungleJM/DualPhotoStack/releases/latest | grep -o "https://.*DPS-Linux-x64\.AppImage") && chmod +x DPS-Linux-x64.AppImage && ./DPS-Linux-x64.AppImage
+wget $(curl -s https://api.github.com/repos/JungleJM/DualPhotoStack/releases | jq -r '.[0].assets[] | select(.name | contains("DPS-Linux-x64.AppImage")) | .browser_download_url') && chmod +x DPS-Linux-x64.AppImage && ./DPS-Linux-x64.AppImage
+```
+
+**For systems without jq:**
+```bash
+# Direct download of current latest build
+wget https://github.com/JungleJM/DualPhotoStack/releases/download/v0.25.0-build-9/DPS-Linux-x64.AppImage
+chmod +x DPS-Linux-x64.AppImage
+./DPS-Linux-x64.AppImage
 ```
 
 ### Manual Installation
-1. **Download** the latest release from [GitHub Releases](https://github.com/JungleJM/DualPhotoStack/releases/latest)
+1. **Download** the latest release from [GitHub Releases](https://github.com/JungleJM/DualPhotoStack/releases)
 2. **Make executable**: `chmod +x DPS-Linux-x64.AppImage`  
 3. **Run**: `./DPS-Linux-x64.AppImage`
 4. **Follow** the configuration wizard
