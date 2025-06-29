@@ -124,6 +124,7 @@ ${sessionMarker}`;
         });
         
         res.on('end', () => {
+          clearTimeout(timeoutId);
           if (res.statusCode === 200 && responseData.includes('pastebin.com/')) {
             this.pasteId = responseData.split('/').pop().trim();
             resolve(responseData);
@@ -138,17 +139,19 @@ ${sessionMarker}`;
 
       req.on('error', (error) => {
         // Fallback to a simpler approach
+        clearTimeout(timeoutId);
         console.log('📁 Remote logging failed, using local file sharing approach');
         this.createLocalShare();
         resolve();
       });
 
       // Set a timeout for the request
-      req.setTimeout(5000, () => {
+      const timeoutId = setTimeout(() => {
+        req.destroy();
         console.log('📁 Remote service timeout, using local file sharing approach');
         this.createLocalShare();
         resolve();
-      });
+      }, 5000);
 
       req.write(postData);
       req.end();
@@ -231,6 +234,13 @@ Live Log Stream:
     
     if (this.flushInterval) {
       clearInterval(this.flushInterval);
+      this.flushInterval = null;
+    }
+    
+    // Cancel any pending timeouts
+    if (this.pendingTimeouts) {
+      this.pendingTimeouts.forEach(timeoutId => clearTimeout(timeoutId));
+      this.pendingTimeouts = [];
     }
     
     // Final flush
@@ -242,6 +252,8 @@ Live Log Stream:
     } else {
       console.log(`📡 Session completed - Final logs at: https://pastebin.com/${this.pasteId}`);
     }
+    
+    this.enabled = false;
   }
 }
 

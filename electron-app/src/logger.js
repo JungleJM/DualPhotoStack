@@ -54,15 +54,21 @@ class DPSLogger {
 
   setupRemoteLogging() {
     // Enable remote logging by default for easier troubleshooting
-    // Only disable if explicitly requested with --no-remote-logs
+    // Only disable if explicitly requested with --no-remote-logs, in test environment, or local-only
     const disableRemoteLogging = process.argv.includes('--no-remote-logs') || 
-                                process.argv.includes('--local-only');
+                                process.argv.includes('--local-only') ||
+                                process.env.NODE_ENV === 'test' ||
+                                process.env.JEST_WORKER_ID !== undefined;
     
     if (!disableRemoteLogging) {
       // Pass reference to main logger so remote logger can log URLs to local files
       this.remoteLogger = new SimpleRemoteLogger(true, this);
     } else {
-      console.log('📝 Remote logging disabled via command line flag');
+      if (process.env.NODE_ENV === 'test' || process.env.JEST_WORKER_ID !== undefined) {
+        console.log('📝 Remote logging disabled during testing');
+      } else {
+        console.log('📝 Remote logging disabled via command line flag');
+      }
     }
   }
 
