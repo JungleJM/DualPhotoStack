@@ -1,0 +1,359 @@
+# DualPhotoStack Interface Configuration
+# This file defines how a universal GUI framework should generate the interface for DPS
+
+meta:
+  schema-version: "1.0"
+  framework-compatibility: ">=1.0.0"
+  created: "2025-06-26"
+  updated: "2025-06-26"
+
+project:
+  id: "com.dps.dual-photo-stack"
+  name: "Dual Photo Stack"
+  version: "0.25.2"
+  description: "Coordinated Immich and PhotoPrism deployment tool"
+  repository: "https://github.com/JungleJM/DualPhotoStack"
+  documentation: "https://github.com/JungleJM/DualPhotoStack/blob/main/README.md"
+  license: "MIT"
+
+interface:
+  theme: "modern-dark"
+  window:
+    title: "Dual Photo Stack Setup"
+    width: 1200
+    height: 800
+    minWidth: 800
+    minHeight: 600
+    resizable: true
+    center: true
+    icon: "assets/icon.png"
+  
+  branding:
+    logo: "assets/dps-logo.png"
+    primaryColor: "#007acc"
+    accentColor: "#28a745"
+    dangerColor: "#dc3545"
+
+workflow:
+  start: "welcome"
+  screens:
+    - id: "welcome"
+      title: "Welcome to Dual Photo Stack"
+      subtitle: "Coordinated photo management deployment"
+      type: "selection"
+      description: "Choose your deployment mode to get started"
+      options:
+        - id: "dps-only"
+          label: "DPS Only"
+          description: "Install Immich + PhotoPrism + Dockge with manual coordination"
+          icon: "🏠"
+          recommended: false
+        - id: "add-to-semaphore"
+          label: "Add to Existing Semaphore"
+          description: "Connect to your existing Semaphore instance for automation"
+          icon: "🔗"
+          recommended: true
+        - id: "full-install"
+          label: "Full Installation"
+          description: "Complete setup including local Semaphore automation"
+          icon: "🚀"
+          recommended: false
+      next: "system-check"
+      validation:
+        required: true
+        error: "Please select a deployment mode to continue"
+
+    - id: "system-check"
+      title: "System Validation"
+      subtitle: "Verifying system requirements"
+      type: "validation"
+      description: "Checking your system for compatibility and requirements"
+      checks:
+        - id: "platform"
+          label: "Platform Check"
+          description: "Verify Linux platform compatibility"
+          plugin: "system.checkPlatform"
+          required: true
+          timeout: 5000
+        - id: "docker"
+          label: "Docker Installation"
+          description: "Check Docker and Docker Compose availability"
+          plugin: "docker.checkInstallation"
+          required: true
+          timeout: 10000
+        - id: "network"
+          label: "Network Configuration"
+          description: "Detect available network interfaces"
+          plugin: "network.detectInterfaces"
+          required: false
+          timeout: 5000
+        - id: "permissions"
+          label: "User Permissions"
+          description: "Validate user access and permissions"
+          plugin: "system.checkPermissions"
+          required: true
+          timeout: 3000
+      continue-on-warning: true
+      next: "configuration"
+      previous: "welcome"
+
+    - id: "configuration"
+      title: "Configuration"
+      subtitle: "Set up your photo management system"
+      type: "form"
+      description: "Configure paths and settings for your deployment"
+      sections:
+        - title: "Storage Configuration"
+          fields:
+            - id: "library-path"
+              type: "directory"
+              label: "Photo Library Directory"
+              description: "Existing directory containing your photos"
+              placeholder: "/home/user/Pictures"
+              required: true
+              validation:
+                exists: true
+                readable: true
+              browse:
+                enabled: true
+                title: "Select Photo Library Directory"
+                buttonText: "Browse..."
+            - id: "data-path"
+              type: "directory"
+              label: "Data Storage Directory"
+              description: "Directory for DPS data and configurations"
+              placeholder: "/home/user/dps-data"
+              required: true
+              validation:
+                writable: true
+                create-if-missing: true
+              browse:
+                enabled: true
+                title: "Select Data Storage Directory"
+                buttonText: "Browse..."
+        
+        - title: "Network Configuration"
+          description: "These settings are auto-detected but can be customized"
+          fields:
+            - id: "network-info"
+              type: "display"
+              label: "Detected Network Interfaces"
+              plugin: "network.displayInterfaces"
+              readonly: true
+      
+      next: "deployment"
+      previous: "system-check"
+      validation:
+        on-change: true
+        submit-enabled: "all-required-valid"
+
+    - id: "deployment"
+      title: "Deployment"
+      subtitle: "Installing and configuring services"
+      type: "progress"
+      description: "Deploying your photo management system"
+      allow-cancel: true
+      show-logs: true
+      log-level: "info"
+      steps:
+        - id: "config"
+          label: "Generate Configuration"
+          description: "Creating Docker Compose files and environment configurations"
+          plugin: "dps.generateConfig"
+          timeout: 30000
+          retry: false
+        - id: "network"
+          label: "Network Setup"
+          description: "Configuring multi-interface network bindings"
+          plugin: "dps.configureNetwork"
+          timeout: 15000
+          retry: true
+        - id: "services"
+          label: "Deploy Services"
+          description: "Starting Immich, PhotoPrism, and Dockge containers"
+          plugin: "dps.deployServices"
+          timeout: 120000
+          retry: true
+        - id: "validation"
+          label: "Validate Deployment"
+          description: "Verifying all services are running correctly"
+          plugin: "dps.validateDeployment"
+          timeout: 30000
+          retry: true
+      
+      on-success: "success"
+      on-error: "configuration"
+      error-action: "retry-or-reconfigure"
+
+    - id: "success"
+      title: "Deployment Complete"
+      subtitle: "Your photo management system is ready!"
+      type: "success"
+      description: "DPS has been successfully deployed and configured"
+      content:
+        - type: "service-urls"
+          title: "Access Your Services"
+          plugin: "dps.getServiceUrls"
+        - type: "summary"
+          title: "Deployment Summary"
+          plugin: "dps.getDeploymentSummary"
+        - type: "next-steps"
+          title: "What's Next?"
+          content: |
+            ## Your photo management system is now running!
+            
+            **Immich**: Modern interface with excellent mobile app support
+            **PhotoPrism**: Advanced AI features and powerful search
+            **Dockge**: Container management interface
+            
+            Both services share the same photo library and are coordinated to avoid conflicts.
+      
+      actions:
+        - id: "open-dockge"
+          label: "Open Dockge"
+          type: "primary"
+          action: "open-url"
+          plugin: "dps.getDockgeUrl"
+        - id: "view-logs"
+          label: "View Logs"
+          type: "secondary"
+          action: "show-logs"
+        - id: "finish"
+          label: "Finish"
+          type: "success"
+          action: "close-app"
+
+plugins:
+  system:
+    path: "../scripts/plugins/system.js"
+    methods: 
+      - "checkPlatform"
+      - "checkPermissions"
+      - "getUserInfo"
+    config:
+      supported-platforms: ["linux"]
+      required-commands: ["docker", "docker-compose"]
+
+  docker:
+    path: "../scripts/plugins/docker.js"
+    methods:
+      - "checkInstallation"
+      - "validateCompose"
+      - "getVersion"
+    config:
+      min-version: "20.0.0"
+      compose-min-version: "2.0.0"
+
+  network:
+    path: "../scripts/plugins/network.js"
+    methods:
+      - "detectInterfaces"
+      - "displayInterfaces"
+      - "validateConnectivity"
+    config:
+      detect-tailscale: true
+      detect-lan: true
+      require-localhost: true
+
+  dps:
+    path: "../scripts/plugins/dps-core.js"
+    methods:
+      - "generateConfig"
+      - "configureNetwork"
+      - "deployServices"
+      - "validateDeployment"
+      - "getServiceUrls"
+      - "getDeploymentSummary"
+      - "getDockgeUrl"
+    config:
+      template-engine: "../scripts/template-engine.js"
+      output-directory: "/opt/stacks"
+      backup-configs: true
+
+components:
+  directory:
+    type: "file-browser"
+    properties:
+      browse-button: true
+      manual-entry: true
+      validation: true
+      create-missing: true
+    styling:
+      button-style: "outline"
+      input-width: "70%"
+      button-width: "25%"
+
+  selection:
+    type: "option-cards"
+    properties:
+      icons: true
+      descriptions: true
+      single-select: true
+      recommended-badge: true
+    styling:
+      layout: "grid"
+      columns: 3
+      card-height: "120px"
+
+  validation:
+    type: "check-list"
+    properties:
+      progress-icons: true
+      real-time: true
+      dependencies: true
+      timeout-handling: true
+    styling:
+      check-icon: "✅"
+      error-icon: "❌"
+      loading-icon: "⏳"
+      warning-icon: "⚠️"
+
+  progress:
+    type: "step-progress"
+    properties:
+      step-numbers: true
+      progress-bar: true
+      log-viewer: true
+      cancel-button: true
+    styling:
+      primary-color: "#007acc"
+      success-color: "#28a745"
+      error-color: "#dc3545"
+
+styling:
+  css: "./assets/dps-theme.css"
+  variables:
+    primary-color: "#007acc"
+    secondary-color: "#6c757d"
+    success-color: "#28a745"
+    warning-color: "#ffc107"
+    danger-color: "#dc3545"
+    info-color: "#17a2b8"
+    
+    font-family: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif"
+    font-size-base: "14px"
+    font-size-large: "18px"
+    font-size-small: "12px"
+    
+    border-radius: "6px"
+    box-shadow: "0 2px 4px rgba(0,0,0,0.1)"
+    transition-speed: "0.2s"
+
+logging:
+  enabled: true
+  level: "info"
+  remote:
+    enabled: true
+    provider: "pastebin"
+    daily-session: true
+  local:
+    enabled: true
+    directory: "~/.config/dps/logs"
+    rotation: "daily"
+    max-files: 7
+
+error-handling:
+  show-errors: true
+  allow-retry: true
+  fallback-mode: "manual-entry"
+  support-contact: "https://github.com/JungleJM/DualPhotoStack/issues"
