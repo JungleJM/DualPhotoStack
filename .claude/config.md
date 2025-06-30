@@ -20,6 +20,18 @@ Most recent screenshots are typically from the current date (2025-06-26).
 ## Project Context
 This is the DualPhotoStack (DPS) project - a Linux-focused Electron application for coordinated Immich and PhotoPrism deployment. The project includes automated GitHub Actions builds, comprehensive logging, and agentic testing capabilities.
 
+## ⚠️ IMPORTANT: Project Status Guidelines
+**Do NOT mark this project as "production ready" or any phase as "complete" unless explicitly directed by the user.**
+
+Key requirements:
+- Testing must be thoroughly validated before claiming completion
+- Full process testing required to ensure every piece works
+- User must explicitly approve "production ready" or "complete" status
+- Document progress and working features, but avoid definitive completion claims
+- Use terms like "functional", "working", "implemented" rather than "complete" or "production-ready"
+
+This ensures accurate project status and prevents premature completion declarations.
+
 ## Permissions and Workspace
 The user has granted full development permissions within this project directory:
 - File operations: read, write, edit, create, delete within `/var/home/j/Documents/DualPhotoStack/`
