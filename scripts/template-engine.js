@@ -201,17 +201,7 @@ class DPSTemplateEngine {
   processTemplate(templateContent, config) {
     let processed = templateContent;
 
-    // Substitute single variables like {{VARIABLE_NAME}}
-    processed = processed.replace(/\{\{([^}]+)\}\}/g, (match, varName) => {
-      const value = this.getNestedValue(config, varName);
-      if (value === undefined || value === null) {
-        console.warn(`Warning: Variable ${varName} not found in config`);
-        return ''; // Replace with empty string for null/undefined values
-      }
-      return value;
-    });
-
-    // Handle multi-line port bindings with proper YAML formatting
+    // Handle multi-line port bindings FIRST (before general variable substitution)
     Object.entries(config.ports).forEach(([key, bindings]) => {
       const placeholder = `{{${key}}}`;
       if (processed.includes(placeholder)) {
@@ -219,6 +209,16 @@ class DPSTemplateEngine {
         const formattedBindings = bindings.join('\n');
         processed = processed.replace(new RegExp(`\\{\\{${key}\\}\\}`, 'g'), formattedBindings);
       }
+    });
+
+    // Substitute remaining single variables like {{VARIABLE_NAME}}
+    processed = processed.replace(/\{\{([^}]+)\}\}/g, (match, varName) => {
+      const value = this.getNestedValue(config, varName);
+      if (value === undefined || value === null) {
+        console.warn(`Warning: Variable ${varName} not found in config`);
+        return ''; // Replace with empty string for null/undefined values
+      }
+      return value;
     });
 
     return processed;
