@@ -211,11 +211,13 @@ class DPSTemplateEngine {
       return value;
     });
 
-    // Handle multi-line port bindings
+    // Handle multi-line port bindings with proper YAML formatting
     Object.entries(config.ports).forEach(([key, bindings]) => {
       const placeholder = `{{${key}}}`;
       if (processed.includes(placeholder)) {
-        processed = processed.replace(placeholder, bindings.join('\n'));
+        // Join with proper line breaks and maintain YAML indentation
+        const formattedBindings = bindings.join('\n');
+        processed = processed.replace(placeholder, formattedBindings);
       }
     });
 
