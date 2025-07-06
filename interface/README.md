@@ -150,7 +150,7 @@ const DPSCore = require('./dps-core.js');
 const plugin = new DPSCore({});
 plugin.generateConfig({
   'library-path': '/home/user/Pictures',
-  'data-path': '/home/user/dps-data',
+  // data-path no longer required - now uses automatic per-service directories
   'deploymentMode': 'dps-only'
 }).then(console.log);
 "

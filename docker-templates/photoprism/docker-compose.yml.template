@@ -16,7 +16,7 @@ services:
       --collation-server=utf8mb4_unicode_ci --max-connections=512
       --innodb-rollback-on-timeout=OFF --innodb-lock-wait-timeout=120
     volumes:
-      - {{DATA_STORAGE_PATH}}/photoprism/database:/var/lib/mysql
+      - ./data/database:/var/lib/mysql
     environment:
       MARIADB_AUTO_UPGRADE: "1"
       MARIADB_INITDB_SKIP_TZINFO: "1"
@@ -88,10 +88,10 @@ services:
       # Shared Library (Read-Only for PhotoPrism)
       - {{LIBRARY_PATH}}:/photoprism/originals:ro
       # PhotoPrism-Specific Data (Separated from Immich)
-      - {{DATA_STORAGE_PATH}}/photoprism/sidecar:/photoprism/sidecar
-      - {{DATA_STORAGE_PATH}}/photoprism/cache:/photoprism/cache
-      - {{DATA_STORAGE_PATH}}/photoprism/storage:/photoprism/storage
-      - {{DATA_STORAGE_PATH}}/photoprism/temp:/photoprism/temp
+      - ./data/sidecar:/photoprism/sidecar
+      - ./data/cache:/photoprism/cache
+      - ./data/storage:/photoprism/storage
+      - ./data/temp:/photoprism/temp
       # System time sync
       - /etc/localtime:/etc/localtime:ro
     healthcheck:

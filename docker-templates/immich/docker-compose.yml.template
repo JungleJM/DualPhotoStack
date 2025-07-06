@@ -11,7 +11,7 @@ services:
       # Shared photo library (read-write for Immich)
       - {{LIBRARY_PATH}}:/usr/src/app/upload/library
       # Immich application data storage
-      - {{DATA_STORAGE_PATH}}/immich/upload:/usr/src/app/upload
+      - ./data/upload:/usr/src/app/upload
       # System time sync
       - /etc/localtime:/etc/localtime:ro
     env_file:
@@ -45,7 +45,7 @@ services:
     container_name: immich_redis
     image: docker.io/valkey/valkey:8-bookworm@sha256:ff21bc0f8194dc9c105b769aeabf9585fea6a8ed649c0781caeac5cb3c247884
     volumes:
-      - {{DATA_STORAGE_PATH}}/immich/redis:/data
+      - ./data/redis:/data
     healthcheck:
       test: redis-cli ping || exit 1
       interval: 30s
@@ -62,7 +62,7 @@ services:
       POSTGRES_DB: ${DB_DATABASE_NAME}
       POSTGRES_INITDB_ARGS: --data-checksums
     volumes:
-      - {{DATA_STORAGE_PATH}}/immich/database:/var/lib/postgresql/data
+      - ./data/database:/var/lib/postgresql/data
     restart: always
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME} -d ${DB_DATABASE_NAME}"]

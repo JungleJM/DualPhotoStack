@@ -118,19 +118,19 @@ workflow:
                 enabled: true
                 title: "Select Photo Library Directory"
                 buttonText: "Browse..."
-            - id: "data-path"
-              type: "directory"
-              label: "Data Storage Directory"
-              description: "Directory for DPS data and configurations"
-              placeholder: "/home/user/dps-data"
-              required: true
-              validation:
-                writable: true
-                create-if-missing: true
-              browse:
-                enabled: true
-                title: "Select Data Storage Directory"
-                buttonText: "Browse..."
+            - id: "data-storage-info"
+              type: "info"
+              label: "Data Storage"
+              description: "Application data is stored automatically in service-specific directories"
+              content: |
+                Data will be stored in: ~/.local/share/docker-stacks/{service}/data/
+                
+                Each service gets isolated storage:
+                • immich/data/ - Databases and uploads
+                • photoprism/data/ - Cache and processing files  
+                • dockge/data/ - Management interface data
+                
+                No manual configuration required.
         
         - title: "Network Configuration"
           description: "These settings are auto-detected but can be customized"

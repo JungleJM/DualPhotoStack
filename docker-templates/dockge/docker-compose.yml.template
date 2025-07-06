@@ -15,7 +15,7 @@ services:
       # Docker socket for container management
       - /var/run/docker.sock:/var/run/docker.sock
       # Dockge application data
-      - {{DATA_STORAGE_PATH}}/dockge/data:/app/data
+      - ./data:/app/data
       # Stacks directory (CRITICAL: Must match exactly)
       - {{STACK_PATH}}:{{STACK_PATH}}
     environment:

@@ -386,13 +386,27 @@ class DPSTemplateEngine {
       try {
         console.log(`Starting ${service} service...`);
         
+        // Create service data directory if it doesn't exist
+        const dataDir = path.join(serviceDir, 'data');
+        if (!fs.existsSync(dataDir)) {
+          fs.mkdirSync(dataDir, { recursive: true });
+          console.log(`Created data directory: ${dataDir}`);
+        }
+        
         // Change to service directory and run docker compose up
+        const originalDir = process.cwd();
         process.chdir(serviceDir);
+        
+        console.log(`Running docker compose up -d in ${serviceDir}`);
         execSync('docker compose up -d', { stdio: 'inherit' });
+        
+        // Change back to original directory
+        process.chdir(originalDir);
         
         console.log(`✅ ${service} service started successfully`);
       } catch (error) {
         console.error(`❌ Failed to start ${service} service:`, error.message);
+        console.error(`Error in directory: ${serviceDir}`);
         throw error;
       }
     }

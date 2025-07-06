@@ -152,11 +152,11 @@
                         </div>
 
                         <div class="form-group">
-                            <label for="data-path">Data Storage Location</label>
-                            <p class="form-help">Directory for databases, caches, and application data</p>
-                            <div class="path-input">
-                                <input type="text" id="data-path" readonly placeholder="Click Browse to select...">
-                                <button id="browse-data" class="btn btn-outline">Browse</button>
+                            <label>Data Storage Location</label>
+                            <p class="form-help">Application data will be stored automatically in:</p>
+                            <div class="data-info">
+                                <code>~/.local/share/docker-stacks/{service}/data/</code>
+                                <small class="text-muted">Each service gets its own data directory</small>
                             </div>
                         </div>
 

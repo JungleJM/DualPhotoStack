@@ -98,31 +98,7 @@ function initializeEventListeners() {
     }
   });
 
-  document.getElementById('browse-data').addEventListener('click', async () => {
-    console.log('🔍 RENDERER: Browse data button clicked');
-    try {
-      console.log('🔍 RENDERER: Calling electronAPI.dialog.selectDirectory for data...');
-      const result = await electronAPI.dialog.selectDirectory({
-        title: 'Select Data Storage Directory'
-      });
-      
-      console.log('🔍 RENDERER: Data dialog result received:', result);
-      
-      if (result.needsManualEntry) {
-        console.log('📝 RENDERER: Manual entry mode required for data');
-        alert('File browser unavailable. Please type the directory path manually in the text field.');
-        document.getElementById('data-path').focus();
-      } else if (!result.canceled && result.filePaths.length > 0) {
-        console.log('✅ RENDERER: Data directory selected:', result.filePaths[0]);
-        document.getElementById('data-path').value = result.filePaths[0];
-        validateConfigForm();
-      } else {
-        console.log('❌ RENDERER: Data dialog canceled or no selection');
-      }
-    } catch (error) {
-      console.error('❌ RENDERER: Error in browse data handler:', error);
-    }
-  });
+  // Data storage browser removed - now uses automatic per-service directories
 
   document.getElementById('back-to-system').addEventListener('click', () => {
     showScreen('systemCheck');
@@ -197,9 +173,7 @@ async function loadSavedConfig() {
       if (result.data.libraryPath) {
         document.getElementById('library-path').value = result.data.libraryPath;
       }
-      if (result.data.dataStoragePath) {
-        document.getElementById('data-path').value = result.data.dataStoragePath;
-      }
+      // Data storage path no longer needed - using automatic per-service directories
       if (result.data.deploymentMode) {
         selectedMode = result.data.deploymentMode;
         // Select the saved mode
@@ -407,10 +381,9 @@ function displayNetworkInfo() {
 
 function validateConfigForm() {
   const libraryPath = document.getElementById('library-path').value;
-  const dataPath = document.getElementById('data-path').value;
   const continueBtn = document.getElementById('continue-to-deploy');
 
-  continueBtn.disabled = !libraryPath || !dataPath;
+  continueBtn.disabled = !libraryPath;
 }
 
 // Deployment screen setup
@@ -446,8 +419,7 @@ async function startDeployment() {
         mode: selectedMode,
         services: getServicesForMode(selectedMode)
       },
-      libraryPath: document.getElementById('library-path').value,
-      dataStoragePath: document.getElementById('data-path').value
+      libraryPath: document.getElementById('library-path').value
     };
 
     // Save configuration

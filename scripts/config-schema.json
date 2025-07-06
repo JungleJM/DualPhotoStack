@@ -31,18 +31,13 @@
           "description": "User-specified photo library location",
           "pattern": "^(/[^/]+)+/?$"
         },
-        "DATA_STORAGE_PATH": {
-          "type": "string", 
-          "description": "User-specified location for databases, caches, logs",
-          "pattern": "^(/[^/]+)+/?$"
-        },
         "STACK_PATH": {
           "type": "string",
           "default": "~/.local/share/docker-stacks",
           "description": "Dockge stack location (fixed)"
         }
       },
-      "required": ["LIBRARY_PATH", "DATA_STORAGE_PATH"]
+      "required": ["LIBRARY_PATH"]
     },
     "network": {
       "type": "object",

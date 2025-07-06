@@ -25,8 +25,7 @@ class DPSCorePlugin {
           mode: params.deploymentMode || 'dps-only',
           services: this.getServicesForMode(params.deploymentMode)
         },
-        libraryPath: params['library-path'],
-        dataStoragePath: params['data-path']
+        libraryPath: params['library-path']
       };
 
       this.deploymentConfig = await this.templateEngine.initializeConfig(userConfig);
@@ -212,7 +211,7 @@ class DPSCorePlugin {
           mode: this.deploymentConfig?.deployment?.mode || 'unknown',
           services: this.deploymentConfig?.deployment?.services || [],
           libraryPath: this.deploymentConfig?.libraryPath,
-          dataPath: this.deploymentConfig?.dataStoragePath,
+          // Data paths are now automatically managed per service
           networkInterfaces: Object.keys(this.deploymentConfig?.network || {}).filter(
             k => this.deploymentConfig.network[k]
           ),
