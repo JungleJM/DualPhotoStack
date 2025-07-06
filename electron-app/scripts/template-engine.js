@@ -265,7 +265,7 @@ class DPSTemplateEngine {
   }
 
   /**
-   * Deploy service templates to /opt/stacks
+   * Deploy service templates to ~/.local/share/docker-stacks
    */
   async deployService(serviceName) {
     const serviceTemplateDir = path.join(this.templateDir, serviceName);

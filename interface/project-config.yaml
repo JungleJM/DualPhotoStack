@@ -267,7 +267,7 @@ plugins:
       - "getDockgeUrl"
     config:
       template-engine: "../scripts/template-engine.js"
-      output-directory: "/opt/stacks"
+      output-directory: "~/.local/share/docker-stacks"
       backup-configs: true
 
 components:

@@ -478,7 +478,7 @@ async function startDeployment() {
 
     // Step 3: Deploy services
     await updateDeploymentStep('services', 'active', '⏳', 'Deploying...');
-    addLogEntry('Deploying services to /opt/stacks/...', 'info');
+    addLogEntry('Deploying services to ~/.local/share/docker-stacks/...', 'info');
     
     const deployResult = await electronAPI.template.deploy(config);
     if (!deployResult.success) {
