@@ -13,7 +13,7 @@ services:
       POSTGRES_USER: semaphore
       POSTGRES_PASSWORD: ${SEMAPHORE_DB_PASSWORD}
     volumes:
-      - {{DATA_STORAGE_PATH}}/semaphore/database:/var/lib/postgresql/data
+      - ./data/database:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U semaphore -d semaphore"]
       interval: 30s
@@ -27,7 +27,6 @@ services:
     depends_on:
       - semaphore-db
     ports:
-      # Multi-interface binding for secure access
 {{SEMAPHORE_PORT_BINDINGS}}
     environment:
       # Database Configuration
@@ -47,10 +46,10 @@ services:
       TZ: {{TIMEZONE}}
     volumes:
       # Semaphore configuration and playbooks
-      - {{DATA_STORAGE_PATH}}/semaphore/config:/etc/semaphore
-      - {{DATA_STORAGE_PATH}}/semaphore/playbooks:/var/lib/semaphore
+      - ./data/config:/etc/semaphore
+      - ./data/playbooks:/var/lib/semaphore
       # SSH keys for remote access (if needed)
-      - {{DATA_STORAGE_PATH}}/semaphore/ssh:/root/.ssh:ro
+      - ./data/ssh:/root/.ssh:ro
       # System time sync
       - /etc/localtime:/etc/localtime:ro
     healthcheck:

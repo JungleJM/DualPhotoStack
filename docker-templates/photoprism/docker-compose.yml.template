@@ -41,7 +41,6 @@ services:
       - seccomp:unconfined
       - apparmor:unconfined
     ports:
-      # Multi-interface binding for secure access
 {{PHOTOPRISM_PORT_BINDINGS}}
     environment:
       # User/Group Configuration
