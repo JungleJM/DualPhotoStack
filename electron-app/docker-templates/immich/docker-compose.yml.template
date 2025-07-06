@@ -17,7 +17,6 @@ services:
     env_file:
       - .env
     ports:
-      # Multi-interface binding for secure access
 {{IMMICH_PORT_BINDINGS}}
     depends_on:
       - redis
