@@ -217,7 +217,7 @@ class DPSTemplateEngine {
       if (processed.includes(placeholder)) {
         // Join with proper line breaks and maintain YAML indentation
         const formattedBindings = bindings.join('\n');
-        processed = processed.replace(placeholder, formattedBindings);
+        processed = processed.replace(new RegExp(`\\{\\{${key}\\}\\}`, 'g'), formattedBindings);
       }
     });
 
