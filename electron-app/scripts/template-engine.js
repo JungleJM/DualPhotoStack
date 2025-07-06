@@ -324,6 +324,9 @@ class DPSTemplateEngine {
       console.log('Network creation skipped (may already exist)');
     }
 
+    // Start the deployed services
+    await this.startServices(services);
+
     return results;
   }
 
@@ -364,6 +367,37 @@ class DPSTemplateEngine {
     });
 
     return summary;
+  }
+
+  /**
+   * Start deployed services using docker compose
+   */
+  async startServices(services) {
+    console.log('Starting Docker services...');
+    
+    for (const service of services) {
+      const serviceDir = path.join(this.outputDir, service);
+      
+      if (!fs.existsSync(serviceDir)) {
+        console.log(`Warning: Service directory ${serviceDir} not found, skipping ${service}`);
+        continue;
+      }
+
+      try {
+        console.log(`Starting ${service} service...`);
+        
+        // Change to service directory and run docker compose up
+        process.chdir(serviceDir);
+        execSync('docker compose up -d', { stdio: 'inherit' });
+        
+        console.log(`✅ ${service} service started successfully`);
+      } catch (error) {
+        console.error(`❌ Failed to start ${service} service:`, error.message);
+        throw error;
+      }
+    }
+    
+    console.log('All services started successfully!');
   }
 
   /**
