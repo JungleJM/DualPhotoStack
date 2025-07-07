@@ -1,0 +1,109 @@
+name: "Simple Hello World Deployer"
+description: "A basic example project that demonstrates nucleus YAML configuration and deployment"
+version: "1.0.0"
+
+fields:
+  - type: "info"
+    title: "Welcome to the Hello World Deployer"
+    content: "This is a simple example project that demonstrates how to use nucleus for deployment automation. It will create a personalized greeting file based on your preferences."
+    style: "info"
+    collapsible: false
+
+  - type: "info"
+    title: "Step 1: Personal Information"
+    content: "Configure your personal greeting settings below."
+    style: "info"
+    collapsible: true
+    expanded: true
+
+  - type: "text"
+    label: "Your Name"
+    key: "user_name"
+    required: true
+    default: "World"
+    description: "Enter your name for the greeting"
+    placeholder: "e.g., Alice"
+
+  - type: "dropdown"
+    label: "Greeting Style"
+    key: "greeting_style"
+    required: true
+    options: ["friendly", "formal", "enthusiastic"]
+    default: "friendly"
+    description: "Choose the style of greeting"
+
+  - type: "info"
+    title: "Greeting Style Guide"
+    content: "• Friendly: 'Hello [name]! Hope you're having a great day!' • Formal: 'Good day, [name]. I trust this message finds you well.' • Enthusiastic: 'Hey there [name]! This is so exciting!!'"
+    style: "info"
+    collapsible: true
+    expanded: false
+
+  - type: "checkbox"
+    label: "Include Timestamp"
+    key: "include_timestamp"
+    default: true
+    description: "Add current timestamp to the greeting"
+
+  - type: "info"
+    title: "Step 2: Output Configuration"
+    content: "Specify where and how to save your greeting file."
+    style: "info"
+    collapsible: true
+    expanded: true
+
+  - type: "dropdown"
+    label: "Output Location"
+    key: "output_location"
+    required: true
+    options: ["current directory", "temp directory", "home directory"]
+    default: "current directory"
+    description: "Where to create the output file"
+
+  - type: "info"
+    title: "Output Location Details"
+    content: "• Current Directory: Saves in the project folder • Temp Directory: Saves in system temporary folder • Home Directory: Saves in your user home folder"
+    style: "info"
+    collapsible: true
+    expanded: false
+
+  - type: "text"
+    label: "Output Filename"
+    key: "output_filename"
+    required: true
+    default: "hello-output.txt"
+    description: "Name of the output file to create"
+    placeholder: "e.g., greeting.txt"
+
+  - type: "info"
+    title: "Step 3: Validation Options"
+    content: "Configure additional validation and safety checks."
+    style: "info"
+    collapsible: true
+    expanded: true
+
+  - type: "checkbox"
+    label: "Check for Required File"
+    key: "check_required_file"
+    default: true
+    description: "Verify that 'required-file.txt' exists in this directory"
+
+  - type: "info"
+    title: "File Validation Notice"
+    content: "When enabled, the deployment will verify that 'required-file.txt' exists before proceeding. This demonstrates how nucleus can perform pre-deployment validation checks."
+    style: "warning"
+    icon: "warning"
+    show_if: "check_required_file == true"
+
+  - type: "info"
+    title: "Ready to Deploy"
+    content: "All configuration is complete! Click the deploy button to generate your personalized greeting file."
+    style: "success"
+    icon: "check"
+
+deployment:
+  script: "./deploy.sh"
+  type: "shell"
+
+logging:
+  events: ["deployment_start", "file_check", "greeting_creation", "script_complete", "deployment_error"]

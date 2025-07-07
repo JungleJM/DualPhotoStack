@@ -1,0 +1,6 @@
+This is the required file for the Simple Hello World project.
+
+It demonstrates how nucleus projects can check for the existence of specific files
+before proceeding with deployment.
+
+Created for testing nucleus functionality.

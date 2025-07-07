@@ -1,0 +1,151 @@
+name: "DualPhotoStack Installer"
+description: "Deploy photo management stack with Docker validation and custom library location"
+version: "1.0.0"
+
+fields:
+  - type: "info"
+    title: "Welcome to DualPhotoStack"
+    content: "DualPhotoStack provides simple photo management using Docker containers. This installer will check your system, configure your photo library location, and deploy Dockge with photo management stacks (Immich, PhotoPrism, and Semaphore)."
+    style: "info"
+    collapsible: false
+
+  - type: "info"
+    title: "Step 1: System Requirements Check"
+    content: "Checking if Docker is installed and properly configured on your system..."
+    style: "info"
+    collapsible: false
+
+  - type: "info"
+    title: "Step 2: Photo Library Configuration"
+    content: "Configure where your photo library will be stored and accessed by the photo management applications."
+    style: "info"
+    collapsible: true
+    expanded: true
+
+  - type: "dropdown"
+    label: "Library Location"
+    key: "library_location"
+    required: true
+    options: ["Use standard Pictures directory", "Use custom directory"]
+    default: "Use standard Pictures directory"
+    description: "Choose where your photo library will be located"
+
+  - type: "text"
+    label: "Custom Library Path"
+    key: "custom_library_path"
+    required_if: "library_location == Use custom directory"
+    default: ""
+    description: "Enter the full path to your photo library directory"
+    placeholder: "/path/to/your/photos"
+    show_if: "library_location == Use custom directory"
+
+  - type: "info"
+    title: "Library Path Information"
+    content: "• Standard Pictures Directory: Uses ~/Pictures/library for your photos\n• Custom Directory: Specify any directory you prefer\n\nThe installer will create subdirectories for organization:\n• library/ - Your photo files (read-only access)\n• apps/ - Application data and metadata"
+    style: "info"
+    collapsible: true
+    expanded: false
+
+  - type: "checkbox"
+    label: "Create library subdirectories"
+    key: "create_subdirs"
+    default: true
+    description: "Create organized 'library' and 'apps' subdirectories"
+
+  - type: "info"
+    title: "Step 3: Installation Options"
+    content: "Configure installation preferences and additional options."
+    style: "info"
+    collapsible: true
+    expanded: true
+
+  - type: "dropdown"
+    label: "Installation Location"
+    key: "install_location"
+    required: true
+    options: ["User directory (~/.local/share)", "Custom directory"]
+    default: "User directory (~/.local/share)"
+    description: "Where to install DualPhotoStack"
+
+  - type: "text"
+    label: "Custom Install Path"
+    key: "custom_install_path"
+    required_if: "install_location == Custom directory"
+    default: ""
+    description: "Enter the full path for installation"
+    placeholder: "/opt/dualphotostack"
+    show_if: "install_location == Custom directory"
+
+  - type: "info"
+    title: "Installation Location Details"
+    content: "• User Directory: Installs in ~/.local/share/dualphotostack (recommended for single users)\n• Custom Directory: Install anywhere you prefer (may require different permissions)"
+    style: "info"
+    collapsible: true
+    expanded: false
+
+  - type: "checkbox"
+    label: "Start services automatically"
+    key: "auto_start"
+    default: true
+    description: "Start Dockge and configure stacks after installation"
+
+  - type: "info"
+    title: "Step 4: Service Configuration"
+    content: "Choose which photo management services to prepare for deployment."
+    style: "info"
+    collapsible: true
+    expanded: true
+
+  - type: "checkbox"
+    label: "Prepare Immich stack"
+    key: "prepare_immich"
+    default: true
+    description: "Full-featured photo management with AI features"
+
+  - type: "checkbox"
+    label: "Prepare PhotoPrism stack"
+    key: "prepare_photoprism"
+    default: true
+    description: "AI-powered photo organization and search"
+
+  - type: "checkbox"
+    label: "Prepare Semaphore stack"
+    key: "prepare_semaphore"
+    default: false
+    description: "Ansible automation platform for server management"
+
+  - type: "info"
+    title: "Service Information"
+    content: "• Immich: Modern photo management with facial recognition and AI tagging\n• PhotoPrism: Browse and organize photos with AI-powered search\n• Semaphore: Web-based Ansible automation for server management\n\nNote: Services will be configured but not started automatically. You'll start them through Dockge."
+    style: "info"
+    collapsible: true
+    expanded: false
+
+  - type: "info"
+    title: "Step 5: Ready to Install"
+    content: "Review your settings and prepare for installation. Default ports will be used:\n\n• Dockge: http://localhost:5001\n• Immich: http://localhost:2283\n• PhotoPrism: http://localhost:2342\n• Semaphore: http://localhost:3000"
+    style: "info"
+    collapsible: true
+    expanded: true
+
+  - type: "info"
+    title: "Ready to Install"
+    content: "All configuration is complete! The installer will:\n\n1. Verify Docker installation\n2. Create installation directories\n3. Configure photo library paths\n4. Set up Dockge container manager\n5. Prepare selected photo management stacks\n6. Start services (if enabled)\n\nClick deploy to begin the installation process."
+    style: "success"
+    icon: "check"
+
+deployment:
+  script: "./install.sh"
+  type: "shell"
+
+logging:
+  events:
+    - "deployment_start"
+    - "docker_check"
+    - "directory_creation"
+    - "service_config"
+    - "docker_compose"
+    - "stack_preparation"
+    - "service_start"
+    - "deployment_complete"
+    - "deployment_error"
