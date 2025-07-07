@@ -1,0 +1,88 @@
+services:
+  photoprism-db:
+    image: mariadb:11
+    container_name: photoprism-mariadb
+    restart: unless-stopped
+    security_opt:
+      - seccomp:unconfined
+      - apparmor:unconfined
+    command: mariadbd --innodb-buffer-pool-size=512M
+      --transaction-isolation=READ-COMMITTED --character-set-server=utf8mb4
+      --collation-server=utf8mb4_unicode_ci --max-connections=512
+      --innodb-rollback-on-timeout=OFF --innodb-lock-wait-timeout=120
+    volumes:
+      - {{STACK_PATH}}/photoprism/mariadb-data:/var/lib/mysql
+    environment:
+      MARIADB_AUTO_UPGRADE: "1"
+      MARIADB_INITDB_SKIP_TZINFO: "1"
+      MARIADB_DATABASE: photoprism
+      MARIADB_USER: photoprism
+      MARIADB_PASSWORD: ${PHOTOPRISM_DATABASE_PASSWORD}
+      MARIADB_ROOT_PASSWORD: ${PHOTOPRISM_ROOT_PASSWORD}
+  photoprism:
+    image: photoprism/photoprism:latest
+    container_name: photoprism-app
+    restart: unless-stopped
+    user: 3000:3000
+    depends_on:
+      - photoprism-db
+    security_opt:
+      - seccomp:unconfined
+      - apparmor:unconfined
+    ports:
+      - 2342:2342
+    environment:
+      # User/Group Configuration (Match photovault permissions)
+      PHOTOPRISM_UID: 3000
+      PHOTOPRISM_GID: 3000
+      # Database Configuration
+      PHOTOPRISM_DATABASE_DRIVER: mysql
+      PHOTOPRISM_DATABASE_SERVER: photoprism-db:3306
+      PHOTOPRISM_DATABASE_NAME: photoprism
+      PHOTOPRISM_DATABASE_USER: photoprism
+      PHOTOPRISM_DATABASE_PASSWORD: ${PHOTOPRISM_DATABASE_PASSWORD}
+      # Storage Paths (Clean Separation with Read-Only Originals)
+      PHOTOPRISM_ORIGINALS_PATH: /photoprism/originals
+      PHOTOPRISM_STORAGE_PATH: /photoprism/storage
+      PHOTOPRISM_SIDECAR_PATH: /photoprism/sidecar
+      PHOTOPRISM_CACHE_PATH: /photoprism/cache
+      PHOTOPRISM_TEMP_PATH: /photoprism/temp
+      # Read-Only Configuration (Critical for EPS Architecture)
+      PHOTOPRISM_READONLY: "false"
+      PHOTOPRISM_SIDECAR_YAML: "true"
+      PHOTOPRISM_SIDECAR_JSON: "false"
+      PHOTOPRISM_BACKUP_YAML: "true"
+      # AI and Processing Settings
+      PHOTOPRISM_DISABLE_TENSORFLOW: "false"
+      PHOTOPRISM_DISABLE_FACES: "false"
+      PHOTOPRISM_DISABLE_CLASSIFICATION: "false"
+      PHOTOPRISM_WORKERS: "4"
+      # Security and Access
+      PHOTOPRISM_ADMIN_USER: admin
+      PHOTOPRISM_ADMIN_PASSWORD: ${PHOTOPRISM_ADMIN_PASSWORD}
+      PHOTOPRISM_AUTH_MODE: password
+      PHOTOPRISM_PUBLIC: "false"
+      # Feature Configuration
+      PHOTOPRISM_EXPERIMENTAL: "false"
+      PHOTOPRISM_DISABLE_CHOWN: "false"
+      PHOTOPRISM_DISABLE_WEBDAV: "true"
+      # Performance Tuning
+      PHOTOPRISM_JPEG_QUALITY: "85"
+      PHOTOPRISM_DETECT_NSFW: "false"
+      PHOTOPRISM_UPLOAD_NSFW: "true"
+      # Timezone
+      TZ: America/Chicago
+    volumes:
+      # Clean Library (Read-Only)
+      - /mnt/photovault/library:/photoprism/originals:ro
+      # PhotoPrism-Specific Data (Separated)
+      - /mnt/photovault/apps/photoprism/sidecar:/photoprism/sidecar
+      - /mnt/photovault/apps/photoprism/cache:/photoprism/cache
+      - /mnt/photovault/apps/photoprism/albums:/photoprism/storage/albums
+      # Performance Data (NVME)
+      - {{STACK_PATH}}/photoprism/temp:/photoprism/temp
+      # System
+      - /etc/localtime:/etc/localtime:ro
+networks:
+  default: null # Using Docker's default bridge network (simplified)
+
