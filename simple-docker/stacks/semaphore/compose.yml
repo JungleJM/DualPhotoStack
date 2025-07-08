@@ -1,0 +1,47 @@
+version: '3.8'
+services:
+  semaphore:
+    image: semaphoreui/semaphore:latest
+    container_name: semaphore-app
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      # Database Configuration (Bolt DB - file-based)
+      SEMAPHORE_DB_DIALECT: bolt
+      
+      # Admin User Configuration
+      SEMAPHORE_ADMIN: admin
+      SEMAPHORE_ADMIN_PASSWORD: ${SEMAPHORE_ADMIN_PASSWORD}
+      SEMAPHORE_ADMIN_NAME: "Administrator"
+      SEMAPHORE_ADMIN_EMAIL: ${SEMAPHORE_ADMIN_EMAIL}
+      
+      # Security Configuration
+      SEMAPHORE_ACCESS_KEY_ENCRYPTION: ${SEMAPHORE_ACCESS_KEY_ENCRYPTION}
+      SEMAPHORE_LDAP_ACTIVATED: "no"
+      
+      # Web Configuration
+      SEMAPHORE_WEB_HOST: ""
+      SEMAPHORE_WEB_ROOT: ""
+      
+      # Optional: Enable email notifications
+      # SEMAPHORE_EMAIL_HOST: ""
+      # SEMAPHORE_EMAIL_PORT: ""
+      # SEMAPHORE_EMAIL_USERNAME: ""
+      # SEMAPHORE_EMAIL_PASSWORD: ""
+      # SEMAPHORE_EMAIL_SECURE: ""
+      
+    volumes:
+      # Bolt database file storage
+      - ./data:/data:rw
+      # Configuration and temporary files
+      - ./config:/etc/semaphore:rw
+      - ./tmp:/tmp/semaphore:rw
+      # Mount SSH keys and Ansible inventories
+      - ./ssh-keys:/root/.ssh:ro
+      - ./ansible:/ansible:rw
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000"]
+      interval: 30s
+      timeout: 10s
+      retries: 3

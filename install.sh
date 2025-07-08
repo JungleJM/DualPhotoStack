@@ -397,13 +397,38 @@ for stack in immich photoprism semaphore; do
         esac
         
         # Create necessary directories
-        mkdir -p "$STACKS_DIR/$stack/mariadb-data"
-        mkdir -p "$STACKS_DIR/$stack/temp"
-        mkdir -p "$STACKS_DIR/$stack/data"
-        
-        if [ "${create_subdirs}" = "true" ]; then
-            mkdir -p "$PHOTOS_DIR/apps/$stack"
-        fi
+        case $stack in
+            immich|photoprism)
+                mkdir -p "$STACKS_DIR/$stack/mariadb-data"
+                mkdir -p "$STACKS_DIR/$stack/temp"
+                mkdir -p "$STACKS_DIR/$stack/data"
+                if [ "${create_subdirs}" = "true" ]; then
+                    mkdir -p "$PHOTOS_DIR/apps/$stack"
+                fi
+                ;;
+            semaphore)
+                mkdir -p "$STACKS_DIR/$stack/data"
+                mkdir -p "$STACKS_DIR/$stack/config"
+                mkdir -p "$STACKS_DIR/$stack/tmp"
+                mkdir -p "$STACKS_DIR/$stack/ssh-keys"
+                mkdir -p "$STACKS_DIR/$stack/ansible"
+                
+                # Generate secure access key encryption if not exists
+                if [ ! -f "$STACKS_DIR/$stack/.env" ]; then
+                    echo "Generating Semaphore configuration..."
+                    ACCESS_KEY=$(openssl rand -base64 32 2>/dev/null || echo "ChangeThisToASecureRandomBase64String")
+                    
+                    cat > "$STACKS_DIR/$stack/.env" << EOF
+# Semaphore Configuration
+SEMAPHORE_ADMIN_PASSWORD=changeme123!
+SEMAPHORE_ADMIN_EMAIL=admin@localhost
+SEMAPHORE_ACCESS_KEY_ENCRYPTION=$ACCESS_KEY
+EOF
+                    echo "  ✅ Generated .env file with secure access key"
+                    echo "  ⚠️  Please change the default admin password in $STACKS_DIR/$stack/.env"
+                fi
+                ;;
+        esac
     fi
 done
 
