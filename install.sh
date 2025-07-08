@@ -70,11 +70,17 @@ if ! command -v docker &> /dev/null; then
     exit 1
 fi
 
-# Check if docker compose is available
-if ! docker compose version &> /dev/null; then
+# Check if docker compose is available (try plugin first, then standalone)
+DOCKER_COMPOSE_CMD=""
+if docker compose version &> /dev/null; then
+    DOCKER_COMPOSE_CMD="docker compose"
+elif command -v docker-compose &> /dev/null; then
+    DOCKER_COMPOSE_CMD="docker-compose"
+    echo -e "${YELLOW}⚠️  Using standalone docker-compose. Consider upgrading to Docker Compose V2 plugin.${NC}"
+else
     echo -e "${RED}❌ Cannot complete installation: Docker Compose is not available.${NC}"
     echo ""
-    echo "Please install docker-compose-plugin:"
+    echo "Please install docker-compose-plugin (recommended):"
     echo "  • Ubuntu/Debian: sudo apt install docker-compose-plugin"
     echo "  • Fedora: sudo dnf install docker-compose-plugin"
     echo "  • Arch: sudo pacman -S docker-compose"
@@ -86,16 +92,39 @@ if ! docker compose version &> /dev/null; then
 fi
 
 # Check if Docker service is running
-if ! docker ps &> /dev/null; then
-    echo -e "${RED}❌ Cannot complete installation: Docker service is not running or requires sudo.${NC}"
+DOCKER_ERROR=$(docker ps 2>&1)
+if [ $? -ne 0 ]; then
+    echo -e "${RED}❌ Cannot complete installation: Docker service issue detected.${NC}"
     echo ""
-    echo "Please ensure Docker is running and you have proper permissions:"
-    echo "  • Start Docker: sudo systemctl start docker"
-    echo "  • Enable auto-start: sudo systemctl enable docker"
-    echo "  • Add user to docker group: sudo usermod -aG docker $USER"
-    echo "  • Log out and back in (or run: newgrp docker)"
+    
+    # Check for specific error patterns
+    if echo "$DOCKER_ERROR" | grep -q "permission denied"; then
+        echo -e "${YELLOW}Issue: Permission denied accessing Docker${NC}"
+        echo "Solutions:"
+        echo "  • Add user to docker group: sudo usermod -aG docker $USER"
+        echo "  • Log out and back in (or run: newgrp docker)"
+        echo "  • Or use sudo: sudo docker ps"
+    elif echo "$DOCKER_ERROR" | grep -q "Cannot connect to the Docker daemon"; then
+        echo -e "${YELLOW}Issue: Docker daemon is not running${NC}"
+        echo "Solutions:"
+        echo "  • Start Docker: sudo systemctl start docker"
+        echo "  • Enable auto-start: sudo systemctl enable docker"
+        echo "  • Check status: sudo systemctl status docker"
+    elif echo "$DOCKER_ERROR" | grep -q "docker: command not found"; then
+        echo -e "${YELLOW}Issue: Docker command not found in PATH${NC}"
+        echo "Solutions:"
+        echo "  • Ensure Docker is properly installed"
+        echo "  • Add Docker to PATH or restart shell"
+    else
+        echo -e "${YELLOW}Issue: Unknown Docker error${NC}"
+        echo "Error message: $DOCKER_ERROR"
+        echo "Solutions:"
+        echo "  • Check Docker installation: docker --version"
+        echo "  • Check Docker status: sudo systemctl status docker"
+    fi
+    
     echo ""
-    echo "Test with: docker ps"
+    echo "After resolving the issue, test with: docker ps"
     exit 1
 fi
 
@@ -440,11 +469,11 @@ if [ "${auto_start}" = "true" ]; then
     cd "$INSTALL_DIR/dockge"
     
     echo "Starting Docker Compose..."
-    docker compose up -d
+    $DOCKER_COMPOSE_CMD up -d
 else
     echo -e "${YELLOW}Skipping auto-start (disabled in configuration)${NC}"
     echo "To start Dockge manually later, run:"
-    echo "  cd $INSTALL_DIR/dockge && docker compose up -d"
+    echo "  cd $INSTALL_DIR/dockge && $DOCKER_COMPOSE_CMD up -d"
 fi
 
 echo -e "${GREEN}Installation complete!${NC}"
@@ -468,7 +497,7 @@ if [ "${auto_start}" = "true" ]; then
 else
     echo -e "${YELLOW}Dockge is installed but not started.${NC}"
     echo "To start Dockge manually:"
-    echo "  cd $INSTALL_DIR/dockge && docker compose up -d"
+    echo "  cd $INSTALL_DIR/dockge && $DOCKER_COMPOSE_CMD up -d"
     echo ""
 fi
 
@@ -490,8 +519,8 @@ echo "📦 Configured Stacks:"
 
 echo ""
 echo "🔧 Management Commands:"
-echo "  Start Dockge: cd $INSTALL_DIR/dockge && docker compose up -d"
-echo "  Stop Dockge: cd $INSTALL_DIR/dockge && docker compose down"
+echo "  Start Dockge: cd $INSTALL_DIR/dockge && $DOCKER_COMPOSE_CMD up -d"
+echo "  Stop Dockge: cd $INSTALL_DIR/dockge && $DOCKER_COMPOSE_CMD down"
 echo "  Remove Installation: rm -rf $INSTALL_DIR"
 echo ""
 echo "🌐 Access URLs (when running):"
